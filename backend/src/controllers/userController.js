@@ -1,19 +1,22 @@
 const userService = require('../services/userService');
 
-exports.register = async (req, res, next) => {
+exports.register = async (req, res) => {
   try {
-    const user = await userService.createUser(req.body);
-    res.status(201).json(user);
+    const data = req.body;
+
+    const user = await userService.createUser(data);
+
+    res.status(201).json({
+      id: user._id,
+      email: user.email,
+    });
+
   } catch (err) {
-    next(err);
+    if (err.message === "User already exists") {
+      return res.status(409).json({ message: err.message });
+    }
+
+    res.status(500).json({ message: "Server error", content: err.message });
   }
 };
 
-exports.getUsers = async (req, res, next) => {
-  try {
-    const users = await userService.getAllUsers();
-    res.json(users);
-  } catch (err) {
-    next(err);
-  }
-};

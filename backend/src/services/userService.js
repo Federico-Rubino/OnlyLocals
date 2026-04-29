@@ -1,19 +1,27 @@
 const User = require('../models/userModel');
+const bcrypt = require('bcrypt');
 
 exports.createUser = async (data) => {
-  if (!data.email || !data.password) {
-    throw new Error('Email e password richieste');
+
+  const existing = await User.findOne({ email: data.email });
+  if (existing) {
+    throw new Error("User already exists");
   }
 
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
   const user = {
-    id: Date.now(),
+    name: data.name,
+    surname: data.surname,
+    bornDate: data.bornDate,
     email: data.email,
-    password: data.password,
+    auth: {
+      passwordHash: hashedPassword,
+      username: data.username
+    },
+
   };
 
   return User.create(user);
 };
 
-exports.getAllUsers = async () => {
-  return User.findAll();
-};
