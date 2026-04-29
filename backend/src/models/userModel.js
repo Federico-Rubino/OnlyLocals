@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-
-const FidelityCardSchema = require('./FidelityCardSchema');
+const FidelityCardSchema = require('./fidelityCardModel.js');
 
 const userSchema = new mongoose.Schema({
 
@@ -21,14 +20,14 @@ const userSchema = new mongoose.Schema({
   },
 
   bornDate: {
-    type: Date,
+    type: String,
     required: true
   },
 
   auth: {
     username: { type: String, required: true },
     passwordHash: { type: String, required: true },
-    isAuth: { type: Boolean, required: true }
+    isAuth: { type: Boolean, default: false }
   },
 
   //role onboarding
