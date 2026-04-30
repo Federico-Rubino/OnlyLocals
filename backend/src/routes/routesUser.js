@@ -43,6 +43,57 @@ const errorMiddleware = require('../middlewares/errorMiddleware');
  *         description: Invalid input data
  */
 router.post('/register', errorMiddleware.validateRegisterData, userController.register);
-
+/**
+ * @openapi
+ * /api/users/shops:
+ *   get:
+ *     summary: Get all commercial activities
+ *     description: Returns a paginated list of commercial activities
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of results per page
+ *     responses:
+ *       200:
+ *         description: Paginated list of commercial activities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     totalShops:
+ *                       type: integer
+ *                     currentPage:
+ *                       type: integer
+ *                     limitPages:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     nextPage:
+ *                       type: boolean
+ *                     prevPage:
+ *                       type: boolean
+ *       500:
+ *         description: Server error
+ */
+router.get('/shops', userController.getShops);
 
 module.exports = router;
