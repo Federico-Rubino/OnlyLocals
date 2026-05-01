@@ -20,25 +20,26 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.getShops = async (req, res) =>{
-  try {
-    const page = parseInt(req.query.page);
-    const limit = parseInt(req.query.limit);
 
-    const {shops, total} = await userService.getShops(page, limit);
+exports.getShopById = async (req, res) =>{
+  try{
+    const shop = await userService.getShopById(req.params.id);
+    if(!shop){
+      return res.status(404).json({message: "Shop not found"});
 
+    }
     res.status(200).json({
-      success: true,
-      data: shops,
-      pagination: {
-        totalShops: total,
-        currentPage: page,
-        limitPages: Math.ceil(total /limit),
-        nextPage: page < Math.ceil(total/limit), //true or false
-        prevPage: page > 1
+      success:true,
+      data: {
+        name: shop.name,
+        description: shop.description,
+        itinerario: shop.itinerario,
+        events: shop.events,
+        promotions: shop.promotions,
+        
       }
-    });
-  }catch (err){
-    res.status(500).json({ message: "Server error", content: err.message })
-  }
+  });
+}catch (err){
+  res.status(500).json({message: "Server error", content: err.message });
+}
 };
