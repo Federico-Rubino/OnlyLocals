@@ -26,18 +26,8 @@ exports.createUser = async (data) => {
   return User.create(user);
 };
 
-exports.getShops = async (page, limit) => {
-  const skip = (page -1) *limit; 
+exports.getShopById = async (id) =>{
+  const shop = await Shop.findById(id);
+  return shop;
+}
 
-  const result = await Promise.all([
-    Shop.find().skip(skip).limit(limit).sort({ name: 1}),  //0
-    Shop.countDocuments() //1
-  ]);
-
-  const shops =result[0];
-  const total = result[1];
-
-
-
-
-};
