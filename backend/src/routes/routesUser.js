@@ -43,28 +43,26 @@ const errorMiddleware = require('../middlewares/errorMiddleware');
  *         description: Invalid input data
  */
 router.post('/register', errorMiddleware.validateRegisterData, userController.register);
+
+
 /**
  * @openapi
- * /api/users/shops:
+ * /api/users/shops/{id}:
  *   get:
- *     summary: Get all commercial activities
- *     description: Returns a paginated list of commercial activities
+ *     summary: Get a single shop by ID
+ *     description: Returns all info of a specific commercial activity
  *     tags:
  *       - Users
  *     parameters:
- *       - in: query
- *         name: page
+ *       - in: path
+ *         name: id
+ *         required: true
  *         schema:
- *           type: integer
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Number of results per page
+ *           type: string
+ *         description: Shop ID
  *     responses:
  *       200:
- *         description: Paginated list of commercial activities
+ *         description: Shop details
  *         content:
  *           application/json:
  *             schema:
@@ -73,27 +71,23 @@ router.post('/register', errorMiddleware.validateRegisterData, userController.re
  *                 success:
  *                   type: boolean
  *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                 pagination:
  *                   type: object
  *                   properties:
- *                     totalShops:
- *                       type: integer
- *                     currentPage:
- *                       type: integer
- *                     limitPages:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     nextPage:
- *                       type: boolean
- *                     prevPage:
- *                       type: boolean
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     itinerario:
+ *                       type: object
+ *                     events:
+ *                       type: array
+ *                     promotions:
+ *                       type: array                 
+ *       404:
+ *         description: Shop not found
  *       500:
  *         description: Server error
  */
-router.get('/shops', userController.getShops);
+router.get('/shops/:id', userController.getShopById);
 
 module.exports = router;
