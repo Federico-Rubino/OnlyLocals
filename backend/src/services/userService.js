@@ -6,8 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 exports.createUser = async (data) => {
 
-  const existing = await User.findOne({ email: data.email });
-  if (existing) {
+  const existingEmail = await User.findOne({ email: data.email });
+  const existingUsername = await User.findOne({'auth.username' : data.username});
+  if (existingEmail || existingUsername) {
     throw new Error("User already exists");
   }
 
