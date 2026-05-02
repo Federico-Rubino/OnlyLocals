@@ -118,3 +118,13 @@ exports.refreshToken = async (oldRefreshToken) => {
 
   return {newAccessToken, newRefreshToken}
 };
+
+exports.logout = async (tokenToRevoke) => {
+  if (!tokenToRevoke) return;
+  await User.updateOne(
+    { "auth.refreshTokens": tokenToRevoke }, // find the user with this token
+    { $pull: { "auth.refreshTokens": tokenToRevoke } } // remove it from the array
+  );
+
+  return true;
+}

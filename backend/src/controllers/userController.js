@@ -64,4 +64,21 @@ exports.refreshToken = async (req, res) => {
     }
 };
 
+exports.logout = async (req, res) => {
+  try {
+    // We expect the frontend to send the refresh token in the body
+    const { refreshToken } = req.body; 
+
+    // Call the service to delete it from the database
+    await userService.logout(refreshToken);
+
+    // Send a success response
+    res.status(200).json({ message: "Log out OK" });
+    
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error during logout"});
+  }  
+};
+
 
