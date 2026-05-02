@@ -6,8 +6,8 @@ const shopController = require('../controllers/shopController');
  * @openapi
  * /api/shops/register:
  *   post:
- *     summary: Registra una nuova attività commerciale
- *     description: Crea uno shop. Nota bene, le coordinate seguono lo standard GeoJSON [longitudine, latitudine].
+ *     summary: Register a new business
+ *     description: Creates a shop. Note: coordinates follow the GeoJSON standard [longitude, latitude].
  *     tags:
  *       - Shops
  *     requestBody:
@@ -16,73 +16,90 @@ const shopController = require('../controllers/shopController');
  *         application/json:
  *           example:
  *             name: "Panificio Centrale"
- *             description: "Pane fresco e dolci locali"
- *             category: ["Ortofrutta"]
- *             itinerario:
- *               lunedi:
- *                 mattina:
+ *             description: "Fresh bread and local pastries"
+ *             category: ["Fruit and Vegetables"]
+ *             itinerary:
+ *               monday:
+ *                 morning:
  *                   location:
  *                     type: "Point"
  *                     coordinates: [9.1900, 45.4642]
- *                   indirizzo: "Piazza Duomo, Milano"
+ *                   address: "Piazza Duomo, Milan"
  *     responses:
  *       201:
- *         description: Shop registrato con successo
+ *         description: Shop successfully registered
  *       400:
- *         description: Dati non validi
+ *         description: Invalid data
  *       500:
- *         description: Errore del server
+ *         description: Server error
  */
 router.post('/register', shopController.registerShop);
-
 /**
  * @openapi
  * /api/shops/search:
  *   get:
- *     summary: Ricerca avanzata e geospaziale
- *     description: Filtra per nome, categoria o posizione (attuale o settimanale).
+ *     summary: Advanced and geospatial search
+ *     description: Filter by name, category, or location (current or weekly schedule).
  *     tags:
  *       - Shops
  *     parameters:
  *       - in: query
  *         name: name
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *       - in: query
  *         name: category
- *         schema: { type: array, items: { type: string } }
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
  *         explode: true
  *       - in: query
  *         name: lat
- *         schema: { type: number, format: float }
+ *         schema:
+ *           type: number
+ *           format: float
  *       - in: query
  *         name: lng
- *         schema: { type: number, format: float }
+ *         schema:
+ *           type: number
+ *           format: float
  *       - in: query
  *         name: radius
- *         schema: { type: number, default: 5 }
+ *         schema:
+ *           type: number
+ *           default: 5
  *       - in: query
  *         name: day
- *         schema: { type: string, enum: [lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica] }
+ *         schema:
+ *           type: string
+ *           enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
  *       - in: query
  *         name: slot
- *         schema: { type: string, enum: [mattina, pomeriggio, sera] }
+ *         schema:
+ *           type: string
+ *           enum: [morning, afternoon, evening]
  *     responses:
  *       200:
- *         description: Risultati della ricerca
+ *         description: Search results
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 success: { type: boolean }
- *                 results: { type: integer }
+ *                 success:
+ *                   type: boolean
+ *                 results:
+ *                   type: integer
  *                 data:
  *                   type: array
  *                   items:
  *                     type: object
  *                     properties:
- *                       _id: { type: string }
- *                       name: { type: string }
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
  */
 router.get('/search', shopController.searchShops);
 
