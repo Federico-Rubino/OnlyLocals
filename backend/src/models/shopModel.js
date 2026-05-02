@@ -53,7 +53,7 @@ const StatisticheSchema = new mongoose.Schema({
   ultimoAggiornamento: Date
 }, { _id: false });
 
-const ShopSchema = new mongoose.Schema({
+const shopSchema = new mongoose.Schema({
   name: {type: String, required: true},
   description: {type: String, required: true},
 
@@ -74,4 +74,4 @@ const ShopSchema = new mongoose.Schema({
 
 });
 
-module.exports = mongoose.model('Shop', ShopSchema, 'shops');
+module.exports = mongoose.model('Shop', shopSchema, 'shops');
