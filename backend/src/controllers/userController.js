@@ -24,6 +24,10 @@ exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
 
+    if (!identifier || !password) {
+      return res.status(400).json({ message: "Bad request. Missing identifier or password." });
+    }
+
     const token = await userService.loginUser(identifier, password);
 
     res.status(201).json({
@@ -31,7 +35,10 @@ exports.login = async (req, res) => {
       token: token
     });
   } catch (err){
-      res.status(500).json({message: err.message});
+    if (err.message === 'Invalid credentials') {
+      return res.status(401).json({ message: err.message });
+    }
+    res.status(500).json({message: "Internal Server Error"});
   }
 };
 
