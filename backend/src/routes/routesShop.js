@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const Shop = require('../models/shopModel');
 const shopController = require('../controllers/shopController');
 
 /**
@@ -15,8 +14,6 @@ const shopController = require('../controllers/shopController');
  *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Shop'
  *           example:
  *             name: "Central Museum"
  *             description: "Tourist shop in the city center"
