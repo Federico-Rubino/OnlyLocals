@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userRoutes = require('./routes/routesUser');
+const routesShop = require('./routes/routesShop');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // routes
 app.use('/api/users', userRoutes);
+app.use('/api/shops', routesShop);
 
 
 //swagger api ui
