@@ -30,7 +30,7 @@ exports.registerShop = async (req, res) => {
 }
 exports.getShopById = async (req, res) =>{
   try{
-    const shop = await userService.getShopById(req.params.id);
+    const shop = await shopService.getShopById(req.params.id);
     if(!shop){
       return res.status(404).json({message: "Shop not found"});
 
