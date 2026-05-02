@@ -57,6 +57,39 @@ const ShopSchema = new mongoose.Schema({
   name: {type: String, required: true},
   description: {type: String, required: true},
 
+  category: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: function(v) {
+        return v && v.length > 0; // Impedisce di inviare un array vuoto []
+      },
+      message: 'Devi selezionare almeno una categoria.'
+    },
+    enum: {
+      values: [
+        'Ortofrutta', 
+        'Macelleria & Salumi', 
+        'Latteria & Formaggi', 
+        'Pescheria', 
+        'Gastronomia & Drink', 
+        'Abbiliamento', 
+        'Artigianato & Design',
+        'Libri & Media',
+        'Eventi & Pop-up',
+        'Musei & Mostre',
+        'Benessere & Fitness',
+        'Ristorazione',
+        'Tecnologia & Elettronica',
+        'Casa & Giardino',
+        'Giocattoli & Bambini',
+        'Animali & Accessori',
+        'Servizi & Professionisti'
+      ],
+      message: '{VALUE} non è una categoria valida'
+    }
+  },
+
   itinerario: {
     lunedi: DaySchema,
     martedi: DaySchema,

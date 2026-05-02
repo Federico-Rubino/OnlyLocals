@@ -1,14 +1,24 @@
 
 exports.registerShop = async (req, res, next) => {
     try {
-        res.status(201).json({ message: 'Shop registered' });
+        const shop = await shopService.registerShop(req.body);
+
+        res.status(201).json({ 
+            success: true,
+            message: 'Shop registered successfully',
+            data: shop 
+        });
     } catch (err) {
-        next(err);
+        res.status(400).json({ 
+            success: false, 
+            message: "Errore durante la registrazione", 
+            error: err.message 
+        });
     }
 }
 exports.getShopById = async (req, res) =>{
   try{
-    const shop = await userService.getShopById(req.params.id);
+    const shop = await shopService.getShopById(req.params.id);
     if(!shop){
       return res.status(404).json({message: "Shop not found"});
 
@@ -18,6 +28,7 @@ exports.getShopById = async (req, res) =>{
       data: {
         name: shop.name,
         description: shop.description,
+        category: shop.category,
         itinerario: shop.itinerario,
         events: shop.events,
         promotions: shop.promotions,
