@@ -25,9 +25,8 @@ const userSchema = new mongoose.Schema({
   },
 
   auth: {
-    username: { type: String, required: true },
-    passwordHash: { type: String, required: true },
-    isAuth: { type: Boolean, default: false }
+    username: { type: String, required: true, unique: true},
+    passwordHash: { type: String, required: true }
   },
 
   //role onboarding

@@ -45,4 +45,6 @@ const errorMiddleware = require('../middlewares/errorMiddleware');
 router.post('/register', errorMiddleware.validateRegisterData, userController.register);
 
 
+router.post('/login', userController.login);
+
 module.exports = router;

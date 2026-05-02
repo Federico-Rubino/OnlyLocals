@@ -20,3 +20,19 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.login = async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+
+    const token = await userService.loginUser(identifier, password);
+
+    res.status(201).json({
+      message: "Login successful",
+      token: token
+    });
+  } catch (err){
+      res.status(500).json({message: err.message});
+  }
+};
+
+
