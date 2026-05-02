@@ -1,8 +1,17 @@
 const mongoose = require('mongoose');
 
 const PositionSchema = new mongoose.Schema({
-  latitudine: Number,
-  longitudine: Number,
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number], // [longitudine, latitudine]
+      required: true
+    }
+  },
   indirizzo: String
 }, { _id: false });
 
@@ -62,7 +71,7 @@ const shopSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function(v) {
-        return v && v.length > 0; // Impedisce di inviare un array vuoto []
+        return v && v.length > 0;
       },
       message: 'Devi selezionare almeno una categoria.'
     },
@@ -73,7 +82,7 @@ const shopSchema = new mongoose.Schema({
         'Latteria & Formaggi', 
         'Pescheria', 
         'Gastronomia & Drink', 
-        'Abbiliamento', 
+        'Abbigliamento', 
         'Artigianato & Design',
         'Libri & Media',
         'Eventi & Pop-up',
@@ -100,11 +109,53 @@ const shopSchema = new mongoose.Schema({
     domenica: DaySchema
   },
 
+  allLocations: {
+    type: [{
+      location: {
+        type: { type: String, default: 'Point' },
+        coordinates: { type: [Number], required: true }
+      }
+    }],
+    default: []
+  },
+
   events: [EventSchema],
   promotion: [PromotionSchema],
   fidelityCardManager: FidelityCardSchema,
   statistiche: StatisticheSchema
 
 });
+
+shopSchema.pre('save', async function() {
+    const shop = this;
+    const newLocations = [];
+  
+    const giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+    const fasce = ['mattina', 'pomeriggio', 'sera'];
+  
+    giorni.forEach(g => {
+      fasce.forEach(f => {
+        const pos = shop.itinerario[g] && shop.itinerario[g][f];
+        if (pos && pos.location && pos.location.coordinates) {
+          newLocations.push({ location: pos.location });
+        }
+      });
+    });
+  
+    shop.allLocations = newLocations;
+  });
+
+const giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+const fasce = ['mattina', 'pomeriggio', 'sera'];
+
+giorni.forEach(giorno => {
+  fasce.forEach(fascia => {
+    const indexPath = `itinerario.${giorno}.${fascia}.location`;
+    
+    shopSchema.index({ [indexPath]: '2dsphere' }, { sparse: true });
+  });
+});
+
+shopSchema.index({ "allLocations.location": "2dsphere" });
 
 module.exports = mongoose.model('Shop', shopSchema, 'shops');
