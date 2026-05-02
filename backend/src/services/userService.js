@@ -62,6 +62,26 @@ exports.loginUser = async (identifier, password) => {
     { expiresIn: '7d' }
   );
 
+  if (!user.auth.refreshTokens) {
+    user.auth.refreshTokens = [];
+  }
+
+  const currentTime = Date.now();
+  user.auth.refreshTokens = user.auth.refreshTokens.filter((oldToken) => {
+    try {
+      // jwt.decode reads the token without verifying the secret (faster)
+      const decoded = jwt.decode(oldToken); 
+      
+      // JWT 'exp' is in seconds, Date.now() is in milliseconds, so we multiply by 1000
+      if (decoded && (decoded.exp * 1000) > currentTime) {
+        return true;  // Keep ii, still alive.
+      }
+      return false; // Throw away, expired.
+    } catch (err) {
+      return false; // Throw away, corrupted.
+    }
+  });
+
   user.auth.refreshTokens.push(refreshToken);
   await user.save();
 
