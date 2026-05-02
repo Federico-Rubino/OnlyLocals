@@ -1,5 +1,4 @@
 const User = require('../models/userModel');
-const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
 
 exports.createUser = async (data) => {
@@ -25,9 +24,4 @@ exports.createUser = async (data) => {
 
   return User.create(user);
 };
-
-exports.getShopById = async (id) =>{
-  const shop = await Shop.findById(id);
-  return shop;
-}
 
