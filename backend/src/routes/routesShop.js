@@ -7,7 +7,7 @@ const shopController = require('../controllers/shopController');
  * /api/shops/register:
  *   post:
  *     summary: Register a new business
- *     description: Creates a shop. Note: coordinates follow the GeoJSON standard [longitude, latitude].
+ *     description: Creates a shop. Note, coordinates follow the GeoJSON standard [longitude, latitude].
  *     tags:
  *       - Shops
  *     requestBody:
@@ -38,7 +38,7 @@ router.post('/register', shopController.registerShop);
  * @openapi
  * /api/shops/search:
  *   get:
- *     summary: Advanced and geospatial search
+ *     summary: Search shops with different filters
  *     description: Filter by name, category, or location (current or weekly schedule).
  *     tags:
  *       - Shops
