@@ -16,7 +16,7 @@ exports.registerShop = async (req, res) => {
         if (err.name === 'ValidationError') {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Shiop registration failed', 
+                message: 'Shop registration failed', 
                 error: err.message 
             });
         }
@@ -30,23 +30,53 @@ exports.registerShop = async (req, res) => {
 }
 exports.getShopById = async (req, res) =>{
   try{
-    const shop = await shopService.getShopById(req.params.id);
-    if(!shop){
-      return res.status(404).json({message: "Shop not found"});
-
+        const shop = await shopService.getShopById(req.params.id);
+        if(!shop){
+            return res.status(404).json({message: "Shop not found"});
+        }
+        res.status(200).json({
+            success:true,
+            data: {
+                name: shop.name,
+                description: shop.description,
+                category: shop.category,
+                itinerario: shop.itinerario,
+                events: shop.events,
+                promotions: shop.promotions,
+                
+            }
+        });
+    }catch (err){
+        res.status(500).json({message: "Server error", content: err.message });
     }
-    res.status(200).json({
-      success:true,
-      data: {
-        name: shop.name,
-        description: shop.description,
-        itinerario: shop.itinerario,
-        events: shop.events,
-        promotions: shop.promotions,
-        
-      }
-  });
-}catch (err){
-  res.status(500).json({message: "Server error", content: err.message });
-}
+};
+
+exports.searchShops = async (req, res) => {
+    try {
+        const { category, lat, lng, radius, day, slot, name } = req.query;
+
+        const filters = {
+            category,
+            name,
+            day,
+            slot,
+            lat: lat ? parseFloat(lat) : null,
+            lng: lng ? parseFloat(lng) : null,
+            radius: radius ? parseFloat(radius) : undefined
+        };
+
+        const shops = await shopService.searchShops(filters);
+
+        res.status(200).json({
+            success: true,
+            results: shops.length,
+            data: shops
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: "Errore durante la ricerca dei negozi", 
+            error: err.message 
+        });
+    }
 };
