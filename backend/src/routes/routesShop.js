@@ -41,3 +41,5 @@ const shopController = require('../controllers/shopController');
 
 
 router.post('/register', shopController.registerShop);
+
+module.exports = router;
