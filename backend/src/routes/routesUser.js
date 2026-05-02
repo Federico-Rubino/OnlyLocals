@@ -94,4 +94,5 @@ router.post('/register', errorMiddleware.validateRegisterData, userController.re
  */
 router.post('/login', userController.login);
 
+router.post('/refreshToken', userController.refreshToken);
 module.exports = router;
