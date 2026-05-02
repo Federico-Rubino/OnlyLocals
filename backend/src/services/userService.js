@@ -2,8 +2,6 @@ const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_TOKEN = process.env.JWT_TOKEN
-const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY
 
 exports.createUser = async (data) => {
 
@@ -49,7 +47,6 @@ exports.loginUser = async (identifier, password) => {
     throw new Error('Invalid credentials');
   }
 
-  const payload = { userId: user._id };
   const accessToken = jwt.sign(
     { userId: user._id }, 
     process.env.JWT_TOKEN, 
@@ -77,7 +74,7 @@ exports.loginUser = async (identifier, password) => {
         return true;  // Keep ii, still alive.
       }
       return false; // Throw away, expired.
-    } catch (err) {
+    } catch {
       return false; // Throw away, corrupted.
     }
   });

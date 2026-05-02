@@ -16,7 +16,7 @@ exports.autenticateToken = (req, res, next) => {
         }
 
         //return id decoded
-        req.user = decodedData;
+        req.user = decodeData;
 
         next();
     });
