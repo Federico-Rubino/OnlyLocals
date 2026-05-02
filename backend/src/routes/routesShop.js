@@ -6,8 +6,8 @@ const shopController = require('../controllers/shopController');
  * @openapi
  * /api/shops/register:
  *   post:
- *     summary: Register a new commercial activity
- *     description: Creates a new shop including weekly itinerary, events, promotions, loyalty system, and statistics.
+ *     summary: Registra una nuova attività commerciale
+ *     description: Crea uno shop. Nota bene, le coordinate seguono lo standard GeoJSON [longitudine, latitudine].
  *     tags:
  *       - Shops
  *     requestBody:
@@ -15,29 +15,76 @@ const shopController = require('../controllers/shopController');
  *       content:
  *         application/json:
  *           example:
- *             name: "Central Museum"
- *             description: "Tourist shop in the city center"
+ *             name: "Panificio Centrale"
+ *             description: "Pane fresco e dolci locali"
+ *             category: ["Ortofrutta"]
  *             itinerario:
  *               lunedi:
  *                 mattina:
- *                   latitudine: 45.4642
- *                   longitudine: 9.19
- *                   indirizzo: "Piazza Duomo, Milan"
+ *                   location:
+ *                     type: "Point"
+ *                     coordinates: [9.1900, 45.4642]
+ *                   indirizzo: "Piazza Duomo, Milano"
  *     responses:
  *       201:
- *         description: Shop successfully registered
+ *         description: Shop registrato con successo
+ *       400:
+ *         description: Dati non validi
+ *       500:
+ *         description: Errore del server
+ */
+router.post('/register', shopController.registerShop);
+
+/**
+ * @openapi
+ * /api/shops/search:
+ *   get:
+ *     summary: Ricerca avanzata e geospaziale
+ *     description: Filtra per nome, categoria o posizione (attuale o settimanale).
+ *     tags:
+ *       - Shops
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema: { type: string }
+ *       - in: query
+ *         name: category
+ *         schema: { type: array, items: { type: string } }
+ *         explode: true
+ *       - in: query
+ *         name: lat
+ *         schema: { type: number, format: float }
+ *       - in: query
+ *         name: lng
+ *         schema: { type: number, format: float }
+ *       - in: query
+ *         name: radius
+ *         schema: { type: number, default: 5 }
+ *       - in: query
+ *         name: day
+ *         schema: { type: string, enum: [lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica] }
+ *       - in: query
+ *         name: slot
+ *         schema: { type: string, enum: [mattina, pomeriggio, sera] }
+ *     responses:
+ *       200:
+ *         description: Risultati della ricerca
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Shop'
- *       400:
- *         description: Invalid request data (validation failed)
- *       500:
- *         description: Internal server error
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 results: { type: integer }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id: { type: string }
+ *                       name: { type: string }
  */
-
-
-router.post('/register', shopController.registerShop);
+router.get('/search', shopController.searchShops);
 
 /**
  * @openapi
@@ -83,5 +130,7 @@ router.post('/register', shopController.registerShop);
  *         description: Server error
  */
 router.get('/:id', shopController.getShopById);
+
+
 
 module.exports = router;
