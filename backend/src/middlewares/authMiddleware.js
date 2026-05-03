@@ -21,8 +21,13 @@ exports.autenticateToken = (req, res, next) => {
 
         const user = await User.findById(decodeData.userId);
 
-        if((req.baseUrl != 'api/shops/register' || req.baseUrl != 'api/users/setAsCostumer') && user.role == 'pending'){
-            return res.status(403).json({message: 'User is pending. Set a role using users/setAsCostumer or assign a shop'});
+        const allowedRoutesForPending = ['/api/shops/register', '/api/users/setAsCustomer'];
+
+        if (user.role === 'pending' && !allowedRoutesForPending.includes(req.originalUrl)) {
+            return res.status(403).json({
+                success: false,
+                message: 'User is pending. Completa il profilo per procedere.'
+            });
         }
 
         //return id decoded

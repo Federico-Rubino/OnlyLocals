@@ -252,5 +252,103 @@ router.post('/promotion', authMiddleware.autenticateToken, shopController.addPro
 router.delete('/promotion', authMiddleware.autenticateToken, shopController.deletePromotion);
 
 
+/**
+ * @openapi
+ * /api/event:
+ *   post:
+ *     summary: Add a new event
+ *     description: Creates a new event for the authenticated user's shop
+ *     tags:
+ *       - Events
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - date
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Summer Sale
+ *               description:
+ *                 type: string
+ *                 example: Big discounts on all items
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: 2026-06-01T10:00:00Z
+ *     responses:
+ *       200:
+ *         description: Event added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Missing required fields or invalid date
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
+
+/**
+ * @openapi
+ * /api/event/delete:
+ *   post:
+ *     summary: Delete an event
+ *     description: Deletes an event from the authenticated user's shop using the event name
+ *     tags:
+ *       - Events
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Summer Sale
+ *     responses:
+ *       200:
+ *         description: Event deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Missing required field (name)
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
 
 module.exports = router;

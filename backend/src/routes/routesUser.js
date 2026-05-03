@@ -213,4 +213,6 @@ router.post('/refreshToken', userController.refreshToken);
  *                   example: "Internal server error during logout"
  */
 router.post('/logout', userController.logout);
+
+
 module.exports = router;

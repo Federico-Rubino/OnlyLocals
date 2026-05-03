@@ -125,6 +125,50 @@ exports.searchShops = async (filters) => {
     return await Shop.find(query).select('name');
 };
 
+exports.addEventToShop = async (userData, eventData) => {
+    const user = await User.findById(userData.userId);
+
+    if (!user || !user.vendorShop) {
+        throw new Error("Vendor shop not found");
+    }
+    
+    if(user.role !== 'vendor') {
+        throw new Error("User is not a vendor");
+    }
+
+    const shop = await Shop.findById(user.vendorShop);
+    if (!shop) {
+        throw new Error("Shop not found");
+    }
+
+    shop.events.push(eventData);
+    await shop.save();
+
+    return shop.events;
+}
+
+exports.deleteEventFromShop = async (userData, eventName) => {
+    const user = await User.findById(userData.userId)
+    if (!user || !user.vendorShop || user.role !== 'vendor') {
+        throw new Error("User is not a vendor or shop not found");
+    }
+    
+    const shop = await Shop.findById(user.vendorShop);
+    if (!shop) {
+        throw new Error("Shop not found");
+    }
+
+    const eventIndex = shop.events.findIndex(e => e.name === eventName);
+    if (eventIndex === -1) {
+        throw new Error("Event not found");
+    }
+
+    shop.events.splice(eventIndex, 1);
+    await shop.save();
+
+    return shop.events;
+
+}
 const getShopFromVendor = async (vendorId) => {
     const vendor = await User.findById(vendorId);
     if (vendor.role != 'vendor'){
