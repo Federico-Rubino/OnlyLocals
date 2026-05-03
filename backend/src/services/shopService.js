@@ -125,14 +125,18 @@ exports.searchShops = async (filters) => {
     return await Shop.find(query).select('name');
 };
 
-
-exports.addPromotion = async (vendorId, data) => {
+const getShopFromVendor = async (vendorId) => {
     const vendor = await User.findById(vendorId);
     if (vendor.role != 'vendor'){
         throw new Error("Not a vendor");
     }
 
-    const shop = await Shop.findById(vendor.vendorShop);
+    return await Shop.findById(vendor.vendorShop);
+};
+
+exports.addPromotion = async (vendorId, data) => {
+
+    const shop = await getShopFromVendor(vendorId);
 
     const promotion = {
         description: data.description,
@@ -145,4 +149,18 @@ exports.addPromotion = async (vendorId, data) => {
     await shop.save();
 
     return shop._id;
+};
+
+exports.deletePromotion = async (vendorId, description) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    const promotionIndex = shop.promotions.findIndex(p => p.description === description);
+    if (promotionIndex === -1) {
+        throw new Error("Promotion not found");
+    }
+
+    shop.promotions.splice(promotionIndex, 1);
+    await shop.save();
+
+    return shop.promotions;
 };

@@ -127,3 +127,20 @@ exports.addPromotion = async (req, res) => {
         });
     }
 };
+
+exports.deletePromotion = async (req, res) => {
+    try {
+    const { description } = req.query;
+    const vendorId = req.user.userId;
+
+    const updatedPromotions = await shopService.deletePromotion(vendorId, description);
+
+    res.status(200).json({
+        success: true,
+        message: "Promotion removed",
+        results: updatedPromotions
+    });
+} catch (err) {
+    res.status(500).json({ message: err.message });
+}
+}

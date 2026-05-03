@@ -190,5 +190,67 @@ router.get('/:id', shopController.getShopById);
 router.post('/promotion', authMiddleware.autenticateToken, shopController.addPromotion);
 
 
+/**
+ * @openapi
+ * /api/shops/promotion:
+ *   delete:
+ *     summary: Delete a promotion
+ *     description: Removes a promotion for the authenticated vendor based on its description.
+ *     tags:
+ *       - Promotions
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: description
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Description of the promotion to delete
+ *     responses:
+ *       200:
+ *         description: Promotion successfully removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Promotion removed
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                   description: Updated list of promotions
+ *       400:
+ *         description: Bad request (e.g., missing description)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Description is required
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.delete('/promotion', authMiddleware.autenticateToken, shopController.deletePromotion);
+
+
 
 module.exports = router;
