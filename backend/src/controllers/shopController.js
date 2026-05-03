@@ -88,29 +88,35 @@ exports.searchShops = async (req, res) => {
 
 exports.addEvent = async (req, res) => {
     try {
+        const vendorId = req.user.userId;
         const { name, description, date } = req.body;
-        if (!name || !description || !date) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Missing required fields.' 
-            });
-        }
+
+        const parsedDate = new Date(date);
         const now = new Date();
-        if (date < now) {
+        
+        if (parsedDate < now) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Event date must be in the future.' 
             });
         }
 
-        const updateEvents = await shopService.addEventToShop(req.user, req.body);
+        const eventData = { name, description, date: parsedDate };
+        const event = await shopService.addEvent(vendorId, eventData);
 
         res.status(200).json({
             success: true,
             message: 'Event added successfully',
-            data: updateEvents
+            data: event 
         });
     } catch (err) {
+        if (err.name === "Not a vendor") {
+            return res.status(403).json({
+                success: false,
+                message: "Not a vendor"
+            });
+        }
+
         res.status(500).json({ 
             success: false, 
             message: "Error adding event to shop", 
@@ -122,15 +128,9 @@ exports.addEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => { 
     try{
         const { name } = req.body;
+        const vendorId = req.user.userId;
 
-        if(!name){
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Missing required field: name.' 
-            });
-        }
-
-        const updatedEvents = await shopService.deleteEventFromShop(req.user, name);
+        const updatedEvents = await shopService.deleteEvent(vendorId, name);
 
         res.status(200).json({
             success: true,
