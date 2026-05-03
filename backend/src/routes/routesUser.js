@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const errorMiddleware = require('../middlewares/errorMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @openapi
@@ -214,5 +215,11 @@ router.post('/refreshToken', userController.refreshToken);
  */
 router.post('/logout', userController.logout);
 
+router.post('/favorites', authMiddleware.autenticateToken, userController.addShopToFavorites);
 
+router.delete('/favorites', authMiddleware.autenticateToken, userController.removeShopFromFavorites);
+
+router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
+
+router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
 module.exports = router;

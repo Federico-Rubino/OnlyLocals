@@ -81,4 +81,106 @@ exports.logout = async (req, res) => {
   }  
 };
 
+exports.addShopToFavorites = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { shopId } = req.body;
 
+    if (!shopId) {
+      return res.status(400).json({
+          success: false,
+          message: "shopId needed."
+      });
+  }
+  const updatedFavorites = await userService.addShopToFavorites(userId, shopId);
+
+    res.status(200).json({ 
+      message: "Shop added to favorites",
+      results: updatedFavorites
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+exports.removeShopFromFavorites = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { shopId } = req.body;
+
+    if (!shopId) {
+      return res.status(400).json({
+          success: false,
+          message: "shopId needed"
+      });
+    }
+
+    const updatedFavorites = await userService.removeShopFromFavorites(userId, shopId);
+
+    res.status(200).json({ 
+      success: true,
+      message: "Shop removed from favorites",
+      results: updatedFavorites
+    });
+  } catch (err) {
+    console.error(err);
+
+    if (err.message === "Shop not in favorites") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+exports.setAsCustomer = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const updatedUser = await userService.setAsCustomer(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "User set as customer",
+      results: updatedUser
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.message === "User is not pending") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+exports.updatePersonalData = async (req, res) => {
+  try {
+      const userId = req.user.userId;
+      const updateData = req.body;
+
+      if (Object.keys(updateData).length === 0) {
+          return res.status(400).json({ success: false, message: "No data provided." });
+      }
+
+      const updatedUser = await userService.updatePersonalData(userId, updateData);
+
+      res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          results: updatedUser
+      });
+  } catch (err) {
+      console.error(err);
+
+      if (err.message === "Email already in use" || err.message === "Username already in use") {
+          return res.status(409).json({ success: false, message: err.message });
+      }
+
+      if (err.message === "User not found") {
+          return res.status(404).json({ success: false, message: err.message });
+      }
+
+      res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}

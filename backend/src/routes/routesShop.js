@@ -309,7 +309,7 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
 /**
  * @openapi
  * /api/event/delete:
- *   post:
+ *   delete:
  *     summary: Delete an event
  *     description: Deletes an event from the authenticated user's shop using the event name
  *     tags:

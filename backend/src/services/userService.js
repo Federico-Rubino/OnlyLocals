@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -124,4 +125,90 @@ exports.logout = async (tokenToRevoke) => {
   );
 
   return true;
+}
+
+exports.addShopToFavorites = async (userId, shopId) => { 
+  const user = await User.findById(userId);
+
+  if(user.role !== 'customer'){
+    throw new Error("Only customers can add shops to favorites");
+  }
+
+  const shop = await Shop.findById(shopId);
+  if (!shop) {
+    throw new Error("Shop not found");
+  }
+  
+  if (user.savedShops.includes(shopId)) {
+    throw new Error("Shop already in favorites");
+  }
+
+  user.savedShops.push(shopId);
+  await user.save();
+
+  return user.savedShops;
+}
+
+exports.removeShopFromFavorites = async (userId, shopId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.savedShops || user.savedShops.length === 0) {
+    throw new Error("Shop not in favorites");
+  }
+
+  const shopIndex = user.savedShops.findIndex(savedId => savedId.toString() === shopId.toString());
+  
+  if (shopIndex === -1) {
+      throw new Error("Shop not in favorites");
+  }
+
+  user.savedShops.splice(shopIndex, 1);
+  await user.save();
+
+  return user.savedShops;
+}
+
+exports.setAsCustomer = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (user.role !== 'pending') {
+    throw new Error("User is not pending");
+  }
+
+  user.role = 'customer';
+  await user.save();
+
+  return user.role;
+}
+
+exports.updatePersonalData = async (userId, newInfo) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const changes = {};
+
+  if (newInfo.email && newInfo.email !== user.email) {
+    const emailExists = await User.findOne({ email: newInfo.email });
+    if (emailExists) throw new Error("Email already in use");
+    user.email = newInfo.email;
+    changes.email = newInfo.email;
+  }
+
+  if (newInfo.username && newInfo.username !== user.auth.username) {
+    const usernameExists = await User.findOne({ "auth.username": newInfo.username });
+    if (usernameExists) throw new Error("Username already in use");
+    user.auth.username = newInfo.username;
+    changes.username = newInfo.username;
+  }
+
+  if (newInfo.name) { user.name = newInfo.name; changes.name = newInfo.name; }
+  if (newInfo.surname) { user.surname = newInfo.surname; changes.surname = newInfo.surname; }
+  if (newInfo.bornDate) { user.bornDate = newInfo.bornDate; changes.bornDate = newInfo.bornDate; }
+
+  await user.save();
+  
+  return changes;
 }
