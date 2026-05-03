@@ -153,3 +153,34 @@ exports.setAsCustomer = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+exports.updatePersonalData = async (req, res) => {
+  try {
+      const userId = req.user.userId;
+      const updateData = req.body;
+
+      if (Object.keys(updateData).length === 0) {
+          return res.status(400).json({ success: false, message: "No data provided." });
+      }
+
+      const updatedUser = await userService.updatePersonalData(userId, updateData);
+
+      res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          results: updatedUser
+      });
+  } catch (err) {
+      console.error(err);
+
+      if (err.message === "Email already in use" || err.message === "Username already in use") {
+          return res.status(409).json({ success: false, message: err.message });
+      }
+
+      if (err.message === "User not found") {
+          return res.status(404).json({ success: false, message: err.message });
+      }
+
+      res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}

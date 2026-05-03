@@ -220,4 +220,6 @@ router.post('/favorites', authMiddleware.autenticateToken, userController.addSho
 router.delete('/favorites', authMiddleware.autenticateToken, userController.removeShopFromFavorites);
 
 router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
+
+router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
 module.exports = router;

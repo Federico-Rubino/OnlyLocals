@@ -183,3 +183,32 @@ exports.setAsCustomer = async (userId) => {
 
   return user.role;
 }
+
+exports.updatePersonalData = async (userId, newInfo) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const changes = {};
+
+  if (newInfo.email && newInfo.email !== user.email) {
+    const emailExists = await User.findOne({ email: newInfo.email });
+    if (emailExists) throw new Error("Email already in use");
+    user.email = newInfo.email;
+    changes.email = newInfo.email;
+  }
+
+  if (newInfo.username && newInfo.username !== user.auth.username) {
+    const usernameExists = await User.findOne({ "auth.username": newInfo.username });
+    if (usernameExists) throw new Error("Username already in use");
+    user.auth.username = newInfo.username;
+    changes.username = newInfo.username;
+  }
+
+  if (newInfo.name) { user.name = newInfo.name; changes.name = newInfo.name; }
+  if (newInfo.surname) { user.surname = newInfo.surname; changes.surname = newInfo.surname; }
+  if (newInfo.bornDate) { user.bornDate = newInfo.bornDate; changes.bornDate = newInfo.bornDate; }
+
+  await user.save();
+  
+  return changes;
+}
