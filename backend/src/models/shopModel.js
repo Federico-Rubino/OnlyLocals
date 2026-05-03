@@ -29,7 +29,7 @@ const EventSchema = new mongoose.Schema({
 
 const PromotionSchema = new mongoose.Schema({
   description: String,
-  value: Number,
+  value: String,
   startDate: Date,
   endDate: Date
 }, { _id: false });
@@ -120,7 +120,7 @@ const shopSchema = new mongoose.Schema({
   },
 
   events: [EventSchema],
-  promotion: [PromotionSchema],
+  promotions: [PromotionSchema],
   fidelityCardManager: FidelityCardSchema,
   statistiche: StatisticheSchema
 

@@ -150,6 +150,45 @@ router.get('/search', shopController.searchShops);
  */
 router.get('/:id', shopController.getShopById);
 
+/**
+ * @openapi
+ * /api/shops/promotion:
+ *   post:
+ *     summary: Add a promotion
+ *     description: Add a promotion to an existing shopS.
+ *     tags:
+ *       - Shops
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - description
+ *               - value
+ *               - startDate
+ *               - endDate
+ *             properties:
+ *               description:
+ *                 type: string
+ *                 description: A brief description of the promotion
+ *                 example: "Formaggio buono scontato"
+ *               value:
+ *                 type: string
+ *                 description: Value of the promotion
+ *                 example: "Due al prezzo di uno - 20%"
+ *     responses:
+ *       200:
+ *         description: Promotion added to the shop
+
+ *       400:
+ *         description: Date error
+ *       500:
+ *         description: Internal server error.
+ */
+router.post('/promotion', authMiddleware.autenticateToken, shopController.addPromotion);
+
 
 
 module.exports = router;

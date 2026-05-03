@@ -85,3 +85,45 @@ exports.searchShops = async (req, res) => {
         });
     }
 };
+
+exports.addPromotion = async (req, res) => {
+    try{
+        const vendorId = req.user.userId;
+        const data = req.body;
+
+        //validate Date
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        const now = new Date();
+
+  
+        if (start < now) {
+            return res.status(400).json({ message: "Start date must be in present or in future" });
+        }
+
+        if (end <= start) {
+            return res.status(400).json({ message: "End date mast be after init date" });
+        }
+
+        const promotion = await shopService.addPromotion(vendorId, data);
+
+        res.status(200).json({
+            success: true,
+            message: "Promotion added to",
+            results: promotion
+        })
+    } catch (err){
+        if(err.name == "Not a vendor"){
+            res.status(403).json({
+                success: false,
+                message: "Not a vendor"
+            })
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server Error",
+            error: err.message
+        });
+    }
+};

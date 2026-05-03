@@ -126,3 +126,23 @@ exports.searchShops = async (filters) => {
 };
 
 
+exports.addPromotion = async (vendorId, data) => {
+    const vendor = await User.findById(vendorId);
+    if (vendor.role != 'vendor'){
+        throw new Error("Not a vendor");
+    }
+
+    const shop = await Shop.findById(vendor.vendorShop);
+
+    const promotion = {
+        description: data.description,
+        value: data.value,
+        startDate: data.startDate,
+        endDate: data.endDate,
+    };
+
+    shop.promotions.push(promotion);
+    await shop.save();
+
+    return shop._id;
+};
