@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const shopController = require('../controllers/shopController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @openapi
@@ -33,7 +34,8 @@ const shopController = require('../controllers/shopController');
  *       500:
  *         description: Server error
  */
-router.post('/register', shopController.registerShop);
+router.post('/register', authMiddleware.autenticateToken, shopController.registerShop);
+
 /**
  * @openapi
  * /api/shops/search:

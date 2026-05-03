@@ -7,11 +7,16 @@ exports.registerShop = async (req, res) => {
 
         const shop = await shopService.registerShop(data);
 
+        const userRole = await shopService.assignShop(shop._id, req.user.userId);
+
         res.status(201).json({ 
             success: true, 
             message: 'Shop registered successfully', 
+            newRole: userRole,
             id: shop._id
        });
+
+       
     } catch (err) {
         if (err.name === 'ValidationError') {
             return res.status(400).json({ 

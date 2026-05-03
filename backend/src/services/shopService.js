@@ -1,4 +1,5 @@
 const Shop = require('../models/shopModel');
+const User = require('../models/userModel');
 
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
@@ -41,6 +42,28 @@ exports.registerShop = async (data) => {
 
     return Shop.create(shop);
 };
+
+exports.assignShop = async (shopId, userId) => {
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+        throw new Error("Shop not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    if (user.vendorShop) {
+        throw new Error("User already has a shop assigned");
+    }
+
+    user.vendorShop = shopId;
+    user.role = 'vendor';
+    await user.save();
+
+    return user.role;
+}
 
 const geoHandler = (f) => {
     if (!f.lat || !f.lng) return {};

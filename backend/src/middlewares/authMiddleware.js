@@ -10,7 +10,7 @@ exports.autenticateToken = (req, res, next) => {
     }
 
     //decode token
-    jwt.verify(token, process.env.JWT_SECRET, (err, decodeData) =>{
+    jwt.verify(token, process.env.JWT_TOKEN, (err, decodeData) =>{
         if (err) {
             return res.status(403).json({message: 'Invalid or expired token. Login again'})
         }
