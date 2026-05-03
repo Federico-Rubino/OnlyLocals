@@ -1,5 +1,6 @@
 
 const User = require('../models/userModel');
+const jwt = require("jsonwebtoken");
 
 exports.autenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -11,7 +12,7 @@ exports.autenticateToken = (req, res, next) => {
     }
 
     //decode token
-    jwt.verify(token, process.env.JWT_TOKEN, (err, decodeData) =>{
+    jwt.verify(token, process.env.JWT_TOKEN, async (err, decodeData) =>{
         if (err) {
             return res.status(403).json({message: 'Invalid or expired token. Login again'})
         }
