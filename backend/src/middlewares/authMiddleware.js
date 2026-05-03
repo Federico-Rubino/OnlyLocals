@@ -1,4 +1,5 @@
-const jwt = require("jsonwebtoken");
+
+const User = require('../models/userModel');
 
 exports.autenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -13,6 +14,14 @@ exports.autenticateToken = (req, res, next) => {
     jwt.verify(token, process.env.JWT_TOKEN, (err, decodeData) =>{
         if (err) {
             return res.status(403).json({message: 'Invalid or expired token. Login again'})
+        }
+
+        console.log(decodeData.userId);
+
+        const user = await User.findById(decodeData.userId);
+
+        if((req.baseUrl != 'api/shops/register' || req.baseUrl != 'api/users/setAsCostumer') && user.role == 'pending'){
+            return res.status(403).json({message: 'User is pending. Set a role using users/setAsCostumer or assign a shop'});
         }
 
         //return id decoded
