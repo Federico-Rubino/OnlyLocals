@@ -80,8 +80,68 @@ exports.searchShops = async (req, res) => {
     } catch (err) {
         res.status(500).json({ 
             success: false, 
-            message: "Errore durante la ricerca dei negozi", 
+            message: "Error searching shops", 
             error: err.message 
         });
     }
 };
+
+exports.addEvent = async (req, res) => {
+    try {
+        const { name, description, date } = req.body;
+        if (!name || !description || !date) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing required fields.' 
+            });
+        }
+        const now = new Date();
+        if (date < now) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Event date must be in the future.' 
+            });
+        }
+
+        const updateEvents = await shopService.addEventToShop(req.user, req.body);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event added successfully',
+            data: updateEvents
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: "Error adding event to shop", 
+            error: err.message 
+        });
+    }
+}
+
+exports.deleteEvent = async (req, res) => { 
+    try{
+        const { name } = req.body;
+
+        if(!name){
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing required field: name.' 
+            });
+        }
+
+        const updatedEvents = await shopService.deleteEventFromShop(req.user, name);
+
+        res.status(200).json({
+            success: true,
+            message: 'Event deleted successfully',
+            data: updatedEvents
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: "Error deleting event from shop", 
+            error: err.message 
+        });
+    }
+}
