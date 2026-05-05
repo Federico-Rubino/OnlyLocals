@@ -25,9 +25,9 @@ const userSchema = new mongoose.Schema({
   },
 
   auth: {
-    username: { type: String, required: true },
+    username: { type: String, required: true, unique: true},
     passwordHash: { type: String, required: true },
-    isAuth: { type: Boolean, default: false }
+    refreshTokens: [{type: String}]
   },
 
   //role onboarding
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
 
   savedShops: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'shops'
+    ref: 'Shop'
   }],
   searches: [{ type: String }], //need to be updated when created search engine
   fidelityCard: {
@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
   // VENDOR DATA 
   vendorShop: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'shops'
+    ref: 'Shop'
   }
 
 });
