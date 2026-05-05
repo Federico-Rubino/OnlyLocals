@@ -1,10 +1,10 @@
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
     <Tabs screenOptions={{ 
-      tabBarActiveTintColor: '#FF6600', // Colore del brand OnlyLocals
+      tabBarActiveTintColor: '#255cb3', // Colore del brand OnlyLocals
       headerShown: false               // Mostra il titolo in alto nella pagina
     }}>
       
