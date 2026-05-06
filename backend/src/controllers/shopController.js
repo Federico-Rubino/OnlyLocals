@@ -204,3 +204,37 @@ exports.deletePromotion = async (req, res) => {
     res.status(500).json({ message: err.message });
 }
 }
+
+exports.updateShop = async (req, res)=>{
+    try{
+        const vendorId = req.user.userId;
+        const updateData = req.body;
+
+        if(Object.keys(updateData).length === 0){
+            return res.status(400).json ({
+                success: false,
+                message: "No data provided for update."
+            });
+        }
+        const updateShop = await shopService.updateShop(vendorId, updateData);
+
+        res.status (200).json({
+            success: true,
+            message: "Shop updated successfully",
+            results: updateShop});
+        
+    }catch (err){
+        if(err.message == "Shop not found"){
+            return res.status(404).json({
+                success: false,
+                message: err.message
+            });
+        }if(err.message == "Not a vendor"){
+            return res.status(403).json({
+                success: false,
+                message: "Internal server error",
+                error: err.message
+            });
+        }
+    }
+};
