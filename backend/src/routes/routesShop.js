@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const shopController = require('../controllers/shopController');
 const authMiddleware = require('../middlewares/authMiddleware');
-
 /**
  * @openapi
  * /api/shops/register:
@@ -350,5 +349,89 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
  *         description: Server error
  */
 router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
+
+/**
+ * @openapi
+ * /api/shops/update:
+ *   put:
+ *     summary: Update shop data
+ *     description: Allows a vendor to update their shop information
+ *     tags:
+ *       - Shops 
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Frutta Mario"
+ *               description:
+ *                 type: string
+ *                 example: "Il migliore fruttivendolo di Trento"
+ *               itinerario:
+ *                 type: object
+ *                 example:
+ *                   lunedi:
+ *                     mattina:
+ *                       latitudine: 46.07
+ *                       longitudine: 11.12
+ *                       indirizzo: "Via Roma, Trento"
+ *               events:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     date:
+ *                       type: string
+ *                       format: date-time
+ *               promotions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     description:
+ *                       type: string
+ *                     value:
+ *                       type: number
+ *                     startDate:
+ *                       type: string
+ *                       format: date-time
+ *                     endDate:
+ *                       type: string
+ *                       format: date-time
+ *     responses:
+ *       200:
+ *         description: Shop updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 results:
+ *                   type: object
+ *       400:
+ *         description: No data provided
+ *       403:
+ *         description: Not a vendor
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/update', authMiddleware.autenticateToken, shopController.updateShop);
+
 
 module.exports = router;
