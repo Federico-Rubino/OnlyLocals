@@ -188,3 +188,9 @@ exports.deletePromotion = async (vendorId, description) => {
 
     return shop.promotions;
 };
+
+exports.getStatistiche = async (vendorId) =>{
+    const shop = await getShopFromVendor(vendorId);
+
+    return await Shop.findById(shop._id).populate('statistiche.storicoFeedback').select('statistiche name');
+}
