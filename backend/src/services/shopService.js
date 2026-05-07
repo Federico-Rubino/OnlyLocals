@@ -37,7 +37,14 @@ exports.registerShop = async (data) => {
         events: data.events || [],
         promotions: data.promotions || [],
         fidelityCardManager: data.fidelityCardManager,
-        statistiche: data.statistiche
+        statistiche:{
+            numSalvataggi:       0,
+            mappaAccessi:        [],
+            storicoFeedback:     [],
+            votoMedio:           0,
+            totaleFeedback:      0,
+            ultimoAggiornamento: new Date()
+        }
     };
 
     return Shop.create(shop);
