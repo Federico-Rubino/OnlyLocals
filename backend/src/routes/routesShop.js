@@ -351,4 +351,89 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
  */
 router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
 
+/**
+ * @openapi
+ * /api/shops/fidelity/scan:
+ *   post:
+ *     summary: Scan fidelity card
+ *     description: Scan a customer fidelity card and add 1 point
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *     responses:
+ *       200:
+ *         description: Punto aggiunto
+ *       404:
+ *         description: Fidelity card not found
+ *       403:
+ *         description: Not a vendor
+ */
+router.post('/fidelity/scan', authMiddleware.autenticateToken, shopController.scanFidelityCard);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/vantaggi:
+ *   put:
+ *     summary: Set fidelity vantaggi
+ *     description: Set fidelity vantaggi for the shop (max once every 3 months)
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               vantaggi:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     descrizione:
+ *                       type: string
+ *                     valore:
+ *                       type: number
+ *                     sogliaPunti:
+ *                       type: integer
+ *     responses:
+ *       200:
+ *         description: Vantaggi aggiornati
+ *       403:
+ *         description: Non modificabile
+ */
+router.put('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController.setVantaggi);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/vantaggi:
+ *   get:
+ *     summary: Get fidelity vantaggi
+ *     description: Returns the fidelity vantaggi of the vendor's shop
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista vantaggi
+ */
+router.get('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController.getVantaggi);
+
+
 module.exports = router;
