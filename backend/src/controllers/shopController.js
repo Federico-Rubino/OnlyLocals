@@ -204,3 +204,74 @@ exports.deletePromotion = async (req, res) => {
     res.status(500).json({ message: err.message });
 }
 }
+
+exports.scanFidelityCard = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode } = req.body;
+
+        if (!barcode) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode obbligatorio"
+            });
+        }
+
+        const result = await shopService.scanFidelityCard(vendorId, barcode);
+
+        res.status(200).json({
+            success: true,
+            message: "Punto aggiunto con successo",
+            data: result
+        });
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.setVantaggi = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { vantaggi } = req.body;
+
+        if (!vantaggi || vantaggi.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Vantaggi non forniti"
+            });
+        }
+
+        const result = await shopService.setVantaggi(vendorId, vantaggi);
+
+        res.status(200).json({
+            success: true,
+            message: "Vantaggi aggiornati con successo",
+            data: result
+        });
+    } catch (err) {
+        if (err.message === "Vantaggi non modificabili prima di 3 mesi dall'ultima modifica") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.getVantaggi = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const vantaggi = await shopService.getVantaggi(vendorId);
+
+        res.status(200).json({
+            success: true,
+            data: vantaggi
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
