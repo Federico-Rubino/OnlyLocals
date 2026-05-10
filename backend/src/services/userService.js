@@ -14,6 +14,8 @@ exports.createUser = async (data) => {
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
+  const userId = new mongoose.Types.ObjectId();//barcode
+
   const user = {
     name: data.name,
     surname: data.surname,
@@ -23,6 +25,10 @@ exports.createUser = async (data) => {
       passwordHash: hashedPassword,
       username: data.username
     },
+     fidelityCard: {
+      barcode: userId.toString(),
+      points: []
+    }
 
   };
 
@@ -212,3 +218,45 @@ exports.updatePersonalData = async (userId, newInfo) => {
   
   return changes;
 }
+
+exports.getPoints = async (userId) => {
+    const user = await User.findById(userId).select('fidelityCard');
+    if (!user) throw new Error("User not found");
+
+    if (!user.fidelityCard || !user.fidelityCard.barcode) {
+        throw new Error("Fidelity card not found");
+    }
+
+    return user.fidelityCard.points;
+};
+
+exports.redeemVantaggio = async (userId, shopId, descrizioneVantaggio) => {
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    if (!user.fidelityCard) throw new Error("Fidelity card not found");
+
+   
+    const pointEntry = user.fidelityCard.points.find(p => p.activity === shopId.toString() );
+    if (!pointEntry) throw new Error("No points for this shop");
+
+    
+    const shop = await Shop.findById(shopId);
+    if (!shop) throw new Error("Shop not found");
+
+    const vantaggio = shop.fidelityCardManager.vantaggi.find( v => v.descrizione === descrizioneVantaggio);
+    if (!vantaggio) throw new Error("Vantaggio not found");
+
+   
+    if (pointEntry.points < vantaggio.sogliaPunti) {
+        throw new Error("Not enough points");
+    }
+
+    pointEntry.points -= vantaggio.sogliaPunti;
+    await user.save();
+
+    return { 
+        vantaggio, 
+        puntiRimanenti: pointEntry.points 
+    };
+};
