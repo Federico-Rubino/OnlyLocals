@@ -222,4 +222,75 @@ router.delete('/favorites', authMiddleware.autenticateToken, userController.remo
 router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
 
 router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
+
+/**
+ * @openapi
+ * /api/users/fidelity/points:
+ *   get:
+ *     summary: Get fidelity points
+ *     description: Returns the fidelity points of the authenticated user
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Points list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       activity:
+ *                         type: string
+ *                       points:
+ *                         type: integer
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.get('/fidelity/points', authMiddleware.autenticateToken, userController.getPoints);
+
+/**
+ * @openapi
+ * /api/users/fidelity/redeem:
+ *   post:
+ *     summary: Redeem a vantaggio
+ *     description: Redeem a fidelity vantaggio using accumulated points
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopId
+ *               - descrizioneVantaggio
+ *             properties:
+ *               shopId:
+ *                 type: string
+ *                 example: "64abc123..."
+ *               descrizioneVantaggio:
+ *                 type: string
+ *                 example: "Sconto 10%"
+ *     responses:
+ *       200:
+ *         description: Vantaggio riscattato
+ *       400:
+ *         description: Not enough points
+ *       404:
+ *         description: Vantaggio not found
+ */
+router.post('/fidelity/redeem', authMiddleware.autenticateToken, userController.redeemVantaggio);
+
 module.exports = router;
