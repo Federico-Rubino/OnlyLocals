@@ -188,3 +188,65 @@ exports.deletePromotion = async (vendorId, description) => {
 
     return shop.promotions;
 };
+exports.scanFidelityCard = async (vendorId, barcode) => {
+    const shop = await getShopFromVendor(vendorId);
+
+
+    if (!shop.fidelityCardManager) {
+        shop.fidelityCardManager = {
+            numeroUtenti: 0,
+            ultimaModifica: null,
+            modificabile: true,
+            vantaggi: []
+        };
+    }
+
+    const user = await User.findOne({ 'fidelityCard.barcode': barcode });
+    if (!user) throw new Error("Fidelity card not found");
+
+    const pointEntry = user.fidelityCard.points.find(
+        p => p.activity === shop._id.toString()
+    );
+
+    if (pointEntry) {
+        pointEntry.count += 1;
+    } else {
+        user.fidelityCard.points.push({
+            activity: shop._id.toString(),
+            count: 1
+        });
+        shop.fidelityCardManager.numeroUtenti += 1;
+        await shop.save();
+    }
+
+    await user.save();
+    return { 
+        puntiTotali: pointEntry ? pointEntry.count : 1,
+        utente: user.name
+    };
+};
+
+exports.setVantaggi = async (vendorId, vantaggi) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
+
+    
+    if (!shop.fidelityCardManager.modificabile) {
+        throw new Error("Vantaggi non modificabili prima di 3 mesi dall'ultima modifica");
+    }
+
+    shop.fidelityCardManager.vantaggi = vantaggi;
+    shop.fidelityCardManager.ultimaModifica = new Date();
+    shop.fidelityCardManager.modificabile = false;
+
+    shop.markModified('fidelityCardManager');
+
+    await shop.save();
+    return shop.fidelityCardManager.vantaggi;
+};
+
+exports.getVantaggi = async (vendorId) => {
+    const shop = await getShopFromVendor(vendorId);
+    return shop.fidelityCardManager?.vantaggi || [];
+};
