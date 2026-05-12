@@ -250,18 +250,6 @@ exports.getVantaggi = async (vendorId) => {
     const shop = await getShopFromVendor(vendorId);
     return shop.fidelityCardManager?.vantaggi || [];
 };
-exports.modifyConversion = async (vendorId, tassoConversione) => {
-    const shop = await getShopFromVendor(vendorId);
-
-    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
-    if (tassoConversione <= 0) throw new Error("Tasso di conversione deve essere maggiore di 0");
-
-    shop.fidelityCardManager.tassoConversione = tassoConversione;
-    shop.markModified('fidelityCardManager');
-    await shop.save();
-
-    return { tassoConversione: shop.fidelityCardManager.tassoConversione };
-};
 
 exports.addPoints = async (vendorId, barcode, importo) => {
     const shop = await getShopFromVendor(vendorId);
