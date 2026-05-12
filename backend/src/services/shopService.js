@@ -1,11 +1,12 @@
 const Shop = require('../models/shopModel');
 const User = require('../models/userModel');
-const Feedback = require('../models/feedbackModel');
+
 
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
   return shop;
 }
+
 
 
 exports.registerShop = async (data) => {
@@ -199,34 +200,34 @@ exports.addFeedback = async (userId, shopId, data) =>{
     const user = await User.findById(userId);
     if(!user) throw new Error("User not found");
 
-    const feedback = await Feedback.create({
-        voto: data.voto,
-        commento: data.commento,
-        user: userId,
-        shop: shopId
-    });
-
     if (!shop.statistiche) {
         shop.statistiche = {
-            numSalvataggi:       0,
-            mappaAccessi:        [],
-            storicoFeedback:     [],
-            votoMedio:           0,
-            totaleFeedback:      0,
+            numSalvataggi:0,
+            mappaAccessi: [],
+            storicoFeedback:[],
+            votoMedio:0,
+            totaleFeedback:0,
             ultimoAggiornamento: null
         };
     }
 
-    shop.statistiche.storicoFeedback.push(feedback._id);
+    const nuovoFeedback = {
+        voto: data.voto,
+        commento: data.commento,
+        user: userId,
+        data: new Date()
+   };
+
+    shop.statistiche.storicoFeedback.push(nuovoFeedback);
     shop.statistiche.totaleFeedback = shop.statistiche.storicoFeedback.length;
 
-    const allFeedbacks = await Feedback.find({shop: shopId});
-    const sommaVoti = allFeedbacks.reduce((acc,f) => acc + f.voto,0);
-    shop.statistiche.votoMedio = (sommaVoti /allFeedbacks.length).toFixed(1);
+    const sommaVoti = shop.statistiche.storicoFeedback.reduce((acc, f) => acc + f.voto, 0);
+    shop.statistiche.votoMedio = (
+    sommaVoti / shop.statistiche.storicoFeedback.length).toFixed(1);
+
     shop.statistiche.ultimoAggiornamento = new Date();
     shop.markModified('statistiche');
 
     await shop.save();
-    return feedback;
-
-}
+    return nuovoFeedback;
+};
