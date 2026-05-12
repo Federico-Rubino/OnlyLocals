@@ -48,7 +48,11 @@ exports.getShopById = async (req, res) =>{
                 itinerario: shop.itinerario,
                 events: shop.events,
                 promotions: shop.promotions,
-                
+                statistiche: {                             
+                votoMedio: shop.statistiche?.votoMedio,
+                totaleFeedback: shop.statistiche?.totaleFeedback,
+                storicoFeedback: shop.statistiche?.storicoFeedback || []
+                }
             }
         });
     }catch (err){
@@ -199,6 +203,7 @@ exports.deletePromotion = async (req, res) => {
         success: true,
         message: "Promotion removed",
         results: updatedPromotions
+
     });
 } catch (err) {
     res.status(500).json({ message: err.message });
