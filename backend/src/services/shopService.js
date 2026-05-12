@@ -250,3 +250,93 @@ exports.getVantaggi = async (vendorId) => {
     const shop = await getShopFromVendor(vendorId);
     return shop.fidelityCardManager?.vantaggi || [];
 };
+exports.modifyConversion = async (vendorId, tassoConversione) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
+    if (tassoConversione <= 0) throw new Error("Tasso di conversione deve essere maggiore di 0");
+
+    shop.fidelityCardManager.tassoConversione = tassoConversione;
+    shop.markModified('fidelityCardManager');
+    await shop.save();
+
+    return { tassoConversione: shop.fidelityCardManager.tassoConversione };
+};
+
+exports.addPoints = async (vendorId, barcode, importo) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    if (!shop.fidelityCardManager) {
+        shop.fidelityCardManager = {
+            numeroUtenti:     0,
+            ultimaModifica:   null,
+            modificabile:     true,
+            tassoConversione: 1,
+            vantaggi:         []
+        };
+    }
+
+    const user = await User.findOne({ 'fidelityCard.barcode': barcode });
+    if (!user) throw new Error("Fidelity card not found");
+
+    const tasso = shop.fidelityCardManager.tassoConversione || 1;
+    const puntiGuadagnati = Math.floor(importo / tasso);
+
+    const pointEntry = user.fidelityCard.points.find(
+        p => p.activity === shop._id.toString()
+    );
+
+    if (pointEntry) {
+        pointEntry.count += puntiGuadagnati;
+    } else {
+        user.fidelityCard.points.push({
+            activity: shop._id.toString(),
+            count:    puntiGuadagnati
+        });
+        shop.fidelityCardManager.numeroUtenti += 1;
+        shop.markModified('fidelityCardManager');
+        await shop.save();
+    }
+
+    user.markModified('fidelityCard');
+    await user.save();
+
+    return {
+        puntiGuadagnati,
+        puntiTotali: pointEntry ? pointEntry.count : puntiGuadagnati,
+        utente:      user.name
+    };
+};
+
+exports.redeemVantaggio = async (vendorId, barcode, descrizioneVantaggio) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
+
+    const user = await User.findOne({ 'fidelityCard.barcode': barcode });
+    if (!user) throw new Error("Fidelity card not found");
+
+    const vantaggio = shop.fidelityCardManager.vantaggi.find(
+        v => v.descrizione === descrizioneVantaggio
+    );
+    if (!vantaggio) throw new Error("Vantaggio not found");
+
+    const pointEntry = user.fidelityCard.points.find(
+        p => p.activity === shop._id.toString()
+    );
+    if (!pointEntry) throw new Error("No points for this shop");
+
+    if (pointEntry.count < vantaggio.sogliaPunti) {
+        throw new Error("Not enough points");
+    }
+
+    pointEntry.count -= vantaggio.sogliaPunti;
+    user.markModified('fidelityCard');
+    await user.save();
+
+    return {
+        vantaggio,
+        puntiRimanenti: pointEntry.count,
+        utente:         user.name
+    };
+};
