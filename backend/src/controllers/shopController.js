@@ -275,3 +275,70 @@ exports.getVantaggi = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }
 };
+
+
+
+exports.addPoints = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode, importo } = req.body;
+
+        if (!barcode || !importo || importo <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode e importo obbligatori"
+            });
+        }
+
+        const result = await shopService.addPoints(vendorId, barcode, importo);
+
+        res.status(200).json({
+            success: true,
+            message: "Punti aggiunti con successo",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.redeemVantaggio = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode, descrizioneVantaggio } = req.body;
+
+        if (!barcode || !descrizioneVantaggio) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode e descrizioneVantaggio obbligatori"
+            });
+        }
+
+        const result = await shopService.redeemVantaggio(vendorId, barcode, descrizioneVantaggio);
+
+        res.status(200).json({
+            success: true,
+            message: "Vantaggio riscattato con successo",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Not enough points") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Vantaggio not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
