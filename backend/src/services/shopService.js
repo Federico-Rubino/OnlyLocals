@@ -122,7 +122,7 @@ exports.searchShops = async (filters) => {
         }
     });
 
-    return await Shop.find(query).select('name');
+    return await Shop.find(query).select('name itinerario');
 };
 
 exports.addEvent= async (vendorId, eventData) => {
