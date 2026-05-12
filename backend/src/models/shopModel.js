@@ -53,9 +53,22 @@ const StatisticheSchema = new mongoose.Schema({
     data: Date,
     valore: Number
   }],
-  storicoFeedback: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Feedback'
+  storicoFeedback: [{       
+    voto: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+    commento: String,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    data: {
+      type: Date,
+      default: Date.now
+    }
   }],
   votoMedio: Number,
   totaleFeedback: Number,
