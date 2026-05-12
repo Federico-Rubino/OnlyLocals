@@ -435,5 +435,75 @@ router.put('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController
  */
 router.get('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController.getVantaggi);
 
+/**
+ * @openapi
+ * /api/shops/fidelity/scan/addPoints:
+ *   post:
+ *     summary: Scan card and add points
+ *     description: Scan customer fidelity card and add points based on purchase amount
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *               - importo
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *               importo:
+ *                 type: number
+ *                 example: 50
+ *     responses:
+ *       200:
+ *         description: Punti aggiunti
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.post('/fidelity/scan/addPoints', authMiddleware.autenticateToken, shopController.addPoints);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/scan/redeem:
+ *   post:
+ *     summary: Redeem a vantaggio
+ *     description: Vendor scans customer card and redeems a vantaggio
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *               - descrizioneVantaggio
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *               descrizioneVantaggio:
+ *                 type: string
+ *                 example: "Sconto 10%"
+ *     responses:
+ *       200:
+ *         description: Vantaggio riscattato
+ *       400:
+ *         description: Not enough points
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.post('/fidelity/scan/redeem', authMiddleware.autenticateToken, shopController.redeemVantaggio);
+
 
 module.exports = router;
