@@ -146,6 +146,10 @@ exports.addShopToFavorites = async (userId, shopId) => {
   user.savedShops.push(shopId);
   await user.save();
 
+  shop.statistiche.numSalvataggi += 1;
+  shop.markModified('statistiche');
+  await shop.save();
+
   return user.savedShops;
 }
 

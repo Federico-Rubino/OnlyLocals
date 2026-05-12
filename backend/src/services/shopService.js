@@ -3,6 +3,15 @@ const User = require('../models/userModel');
 
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
+
+  if(shop){
+    shop.statistiche.mappaAccessi.push({
+        data: new Date(),
+        valore: 1
+    });
+    shop.markModified('statistiche');
+    await shop.save();
+  }
   return shop;
 }
 
