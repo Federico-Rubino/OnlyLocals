@@ -224,6 +224,7 @@ exports.addFeedback = async (userId, shopId, data) =>{
     const sommaVoti = allFeedbacks.reduce((acc,f) => acc + f.voto,0);
     shop.statistiche.votoMedio = (sommaVoti /allFeedbacks.length).toFixed(1);
     shop.statistiche.ultimoAggiornamento = new Date();
+    shop.markModified('statistiche');
 
     await shop.save();
     return feedback;
