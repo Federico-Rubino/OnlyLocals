@@ -255,3 +255,27 @@ exports.addFeedback = async (userId, shopId, data) =>{
     return nuovoFeedback;
 };
 
+
+
+exports.updateShop = async (vendorId, newData) =>{
+    const shop = await getShopFromVendor(vendorId);
+
+    const change = {};
+    if (newData.name){shop.name = newData.name; change.name = newData.name;}
+    if (newData.description){shop.description = newData.description; change.description = newData.description;}
+
+    if(newData.itinerario){
+        const giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+        giorni.forEach(giorno =>{
+            if(newData.itinerario[giorno]){
+                shop.itinerario[giorno] = newData.itinerario[giorno];
+                change[giorno] = newData.itinerario[giorno];
+            }
+        });
+    }
+    if(newData.events){shop.events = newData.events; change.events = newData.events;}
+    if(newData.promotions){shop.promotions = newData.promotions; change.promotions = newData.promotions;}
+    
+    await shop.save();
+    return change; 
+}
