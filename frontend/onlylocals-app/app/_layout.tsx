@@ -1,5 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
+import '../services/i18n';
 
 // Hardcoded test user
 const TEST_USER = {
@@ -7,10 +8,17 @@ const TEST_USER = {
   role: 'customer'  
 };
 
+export const ThemeContext = createContext({
+  theme: 'light' as 'light' | 'dark',
+  setTheme: (t: 'light' | 'dark') => {},
+});
+
 export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   // Questo useEffect serve a capire quando il Root Layout è montato
   useEffect(() => {
@@ -48,11 +56,19 @@ export default function RootLayout() {
   }, [isReady, segments]); // Dipende dal montaggio e dal cambio di pagina
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Definizione dei gruppi */}
-      <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
-    </Stack>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Stack 
+        screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: theme === 'dark' ? '#121212' : '#f5f7fa' } 
+        }}
+      >
+        <Stack.Screen name="(customer)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
+      </Stack>
+    </ThemeContext.Provider>
   );
 }
+
+

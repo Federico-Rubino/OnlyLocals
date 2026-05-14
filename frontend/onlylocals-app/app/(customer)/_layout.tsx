@@ -14,6 +14,15 @@ export default function CustomerLayout() {
           headerBackTitle: 'Indietro' 
         }} 
       />
+
+  {/* Settings screens */}
+      <Stack.Screen name="settings/settings"      options={{ title: 'Impostazioni',  headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="settings/privacy"       options={{ title: 'Privacy',        headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="settings/appearance"    options={{ title: 'Aspetto',        headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="settings/language"      options={{ title: 'Lingua',         headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="settings/security"      options={{ title: 'Sicurezza',      headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="settings/notifications" options={{ title: 'Notifiche',      headerBackTitle: 'Indietro' }} />
+
     </Stack>
   );
 }
