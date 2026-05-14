@@ -204,3 +204,37 @@ exports.deletePromotion = async (req, res) => {
     res.status(500).json({ message: err.message });
 }
 }
+
+exports.getStatistiche = async (req,res)=>{
+    try {
+        const vendorId = req.user.userId;
+        const shop = await shopService.getStatistiche(vendorId);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                nomeShop: shop.name,
+                statistiche: shop.statistiche ? {
+                    numSalvataggi: shop.statistiche.numSalvataggi,
+                    votoMedio: shop.statistiche.votoMedio,
+                    totalFeedback: shop.statistiche.totaleFeedback,
+                    mappaAccessi: shop.statistiche.storicoFeedback,
+                    storicoFeedback: shop.statistiche.storicoFeedback,
+                    ultimoAggiornamento: shop.statistiche.ultimoAggiornamento
+                } : "Nessuna statistica disponibile"
+            }
+        });
+    }catch(err){
+        if(err.message=== "Not a vendor"){
+            return res.status(403).json({success: false, message: err.message});
+        }
+        if(err.message === "Shop not found"){
+            return res.status(404).json({success: false, message: err.message});
+        }
+        res.status(500).json({
+            success:false,
+            message: "Internal server error",
+            error: err.message
+        });
+    }
+};

@@ -107,6 +107,57 @@ router.get('/search', shopController.searchShops);
 
 /**
  * @openapi
+ * /api/shops/statistiche:
+ *   get:
+ *     summary: Get shop statistics
+ *     description: Returns all statistics of the vendor's shop
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Shop statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     nomeShop:
+ *                       type: string
+ *                     statistiche:
+ *                       type: object
+ *                       properties:
+ *                         numSalvataggi:
+ *                           type: integer
+ *                         votoMedio:
+ *                           type: number
+ *                         totaleFeedback:
+ *                           type: integer
+ *                         mappaAccessi:
+ *                           type: array
+ *                         storicoFeedback:
+ *                           type: array
+ *                         ultimoAggiornamento:
+ *                           type: string
+ *                           format: date-time
+ *       403:
+ *         description: Not a vendor
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/statistiche', authMiddleware.autenticateToken, shopController.getStatistiche);
+
+
+/**
+ * @openapi
  * /api/shops/{id}:
  *   get:
  *     summary: Get a single shop by ID
@@ -350,5 +401,6 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
  *         description: Server error
  */
 router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
+
 
 module.exports = router;

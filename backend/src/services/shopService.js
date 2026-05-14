@@ -3,6 +3,15 @@ const User = require('../models/userModel');
 
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
+
+  if(shop){
+    shop.statistiche.mappaAccessi.push({
+        data: new Date(),
+        valore: 1
+    });
+    shop.markModified('statistiche');
+    await shop.save();
+  }
   return shop;
 }
 
@@ -37,7 +46,14 @@ exports.registerShop = async (data) => {
         events: data.events || [],
         promotions: data.promotions || [],
         fidelityCardManager: data.fidelityCardManager,
-        statistiche: data.statistiche
+        statistiche:{
+            numSalvataggi:       0,
+            mappaAccessi:        [],
+            storicoFeedback:     [],
+            votoMedio:           0,
+            totaleFeedback:      0,
+            ultimoAggiornamento: new Date()
+        }
     };
 
     return Shop.create(shop);
@@ -188,3 +204,9 @@ exports.deletePromotion = async (vendorId, description) => {
 
     return shop.promotions;
 };
+
+exports.getStatistiche = async (vendorId) =>{
+    const shop = await getShopFromVendor(vendorId);
+
+    return await Shop.findById(shop._id).populate('statistiche.storicoFeedback').select('statistiche name');
+}
