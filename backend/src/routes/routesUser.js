@@ -213,6 +213,46 @@ router.post('/refreshToken', userController.refreshToken);
  *                   type: string
  *                   example: "Internal server error during logout"
  */
+
+
+/**
+ * @openapi
+ * /api/users/me:
+ *   get:
+ *     summary: Get personal data
+ *     description: Returns the authenticated user's personal data
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     surname:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     bornDate:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
 router.post('/logout', userController.logout);
 
 router.post('/favorites', authMiddleware.autenticateToken, userController.addShopToFavorites);
@@ -222,4 +262,7 @@ router.delete('/favorites', authMiddleware.autenticateToken, userController.remo
 router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
 
 router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
+
+router.get('/me', authMiddleware.autenticateToken, userController.getUserData);
+
 module.exports = router;
