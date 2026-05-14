@@ -1,6 +1,7 @@
 const Shop = require('../models/shopModel');
 const User = require('../models/userModel');
 
+
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
 
@@ -14,6 +15,7 @@ exports.getShopById = async (id) =>{
   }
   return shop;
 }
+
 
 
 exports.registerShop = async (data) => {
@@ -205,8 +207,51 @@ exports.deletePromotion = async (vendorId, description) => {
     return shop.promotions;
 };
 
+
 exports.getStatistiche = async (vendorId) =>{
     const shop = await getShopFromVendor(vendorId);
 
     return await Shop.findById(shop._id).populate('statistiche.storicoFeedback').select('statistiche name');
 }
+
+
+
+exports.addFeedback = async (userId, shopId, data) =>{
+    const shop = await Shop.findById(shopId);
+    if(!shop) throw new Error("Shop not found");
+
+    const user = await User.findById(userId);
+    if(!user) throw new Error("User not found");
+
+    if (!shop.statistiche) {
+        shop.statistiche = {
+            numSalvataggi:0,
+            mappaAccessi: [],
+            storicoFeedback:[],
+            votoMedio:0,
+            totaleFeedback:0,
+            ultimoAggiornamento: null
+        };
+    }
+
+    const nuovoFeedback = {
+        voto: data.voto,
+        commento: data.commento,
+        user: userId,
+        data: new Date()
+   };
+
+    shop.statistiche.storicoFeedback.push(nuovoFeedback);
+    shop.statistiche.totaleFeedback = shop.statistiche.storicoFeedback.length;
+
+    const sommaVoti = shop.statistiche.storicoFeedback.reduce((acc, f) => acc + f.voto, 0);
+    shop.statistiche.votoMedio = (
+    sommaVoti / shop.statistiche.storicoFeedback.length).toFixed(1);
+
+    shop.statistiche.ultimoAggiornamento = new Date();
+    shop.markModified('statistiche');
+
+    await shop.save();
+    return nuovoFeedback;
+};
+
