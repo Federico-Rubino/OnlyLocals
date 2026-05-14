@@ -6,6 +6,7 @@ import ShopResult from '../../../components/shopResult';
 import { shopService } from '../../../services/shopServices';
 import { Shop } from '../../../types/shop';
 
+
 export default function ShopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   
@@ -13,19 +14,12 @@ export default function ShopDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-//   useEffect(() => {
-//     if (id) {
-//       loadShop();
-//     }
-//   }, [id]);
+   useEffect(() => {
+     if (id) {
+       loadShop(id);
+     }
+   },[]);
 
-    useEffect(() => {
-        // ID reale fornito dal database
-        const testId = "69f72092cd05919b74f5e256"; 
-        
-        // Carichiamo questo ID specifico invece di quello dell'URL
-        loadShop(testId); 
-    }, []);
 
   const loadShop = async (targetID: string) => {
     setIsLoading(true);

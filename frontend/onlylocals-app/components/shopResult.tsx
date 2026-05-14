@@ -3,6 +3,8 @@ import Mapbox from '@rnmapbox/maps';
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Shop } from '../types/shop';
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'expo-router';
 
 // Configurazione Token Mapbox
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
@@ -20,6 +22,10 @@ const giorniSettimana = [
 export default function ShopResult({ isLoading, errorMessage, shopData }: ShopResultProps) {
   const [isFavorite, setIsFavorite] = useState(false); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { isLoggedIn, role } = useAuth();
+  const router = useRouter();
+
 
   // Calcolo indice giorno (Lun=0, Dom=6)
   const getOggiIndex = () => {
@@ -70,6 +76,16 @@ export default function ShopResult({ isLoading, errorMessage, shopData }: ShopRe
     );
   };
 
+
+const handleFavoriteToggle = () => {
+  if (!isLoggedIn) {
+    router.push('/(auth)/login');
+    return;
+  }
+  
+  setIsFavorite(!isFavorite);
+};
+
   return (
     <ScrollView style={styles.dataContainer} showsVerticalScrollIndicator={false}>
       
@@ -77,7 +93,7 @@ export default function ShopResult({ isLoading, errorMessage, shopData }: ShopRe
       <View style={styles.sectionHeader}>
         <View style={styles.rowBetween}>
           <Text style={styles.categoryBadge}>{shopData.category?.[0] || "Shop"}</Text>
-          <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}>
+          <TouchableOpacity onPress={handleFavoriteToggle} style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}>
             <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={24} color="#fa5252" />
           </TouchableOpacity>
         </View>

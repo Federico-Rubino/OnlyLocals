@@ -1,58 +1,57 @@
+// app/_layout.tsx
+import { AuthProvider, useAuth } from '../context/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-// Hardcoded test user
-const TEST_USER = {
-  isLoggedIn: false, 
-  role: 'customer'  
-};
-
-export default function RootLayout() {
+// Separated so it can use useAuth() (hooks need to be inside the Provider)
+function RootNavigator() {
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+  const { isLoggedIn, isLoading, role } = useAuth(); 
 
-  // Questo useEffect serve a capire quando il Root Layout è montato
   useEffect(() => {
     setIsReady(true);
   }, []);
 
   useEffect(() => {
-    // Se il router non è pronto o i segmenti non sono ancora caricati, non fare nulla
-    if (!isReady || !segments) return;
+    if (!isReady || !segments || isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inCustomerGroup = segments[0] === '(customer)';
     const inVendorGroup = segments[0] === '(vendor)';
 
-    // --- LOGICA REINDIRIZZAMENTO ---
-
-    // 1. Caso: Utente NON loggato (GUEST)
-    // Se non è loggato e NON si trova già nell'area customer o auth, mandalo a customer
-    if (!TEST_USER.isLoggedIn && !inCustomerGroup && !inAuthGroup) {
+    // 1. Guest → allow browsing as customer
+    if (!isLoggedIn && !inCustomerGroup && !inAuthGroup) {
       router.replace('/(customer)/(tabs)');
-    } 
-    
-    // 2. Caso: Utente VENDOR loggato
-    // Se è un vendor e non si trova nell'area vendor, mandalo lì
-    if (TEST_USER.isLoggedIn && TEST_USER.role === 'vendor' && !inVendorGroup) {
+    }
+
+    // 2. Vendor logged in → send to vendor area
+    if (isLoggedIn && role === 'vendor' && !inVendorGroup) {
       router.replace('/(vendor)/(tabs)');
     }
 
-    // 3. Caso: Utente CUSTOMER loggato
-    // Se è un customer loggato e sta provando a entrare in auth, rimandalo alla home
-    if (TEST_USER.isLoggedIn && TEST_USER.role === 'customer' && inAuthGroup) {
+    // 3. Customer logged in → don't let them see auth pages
+    if (isLoggedIn && role === 'customer' && inAuthGroup) {
       router.replace('/(customer)/(tabs)');
     }
 
-  }, [isReady, segments]); // Dipende dal montaggio e dal cambio di pagina
+  }, [isReady, segments, isLoggedIn, isLoading]); // ← add isLoggedIn, isLoading
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Definizione dei gruppi */}
       <Stack.Screen name="(customer)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
     </Stack>
+  );
+}
+
+// AuthProvider wraps everything so RootNavigator can use useAuth()
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }

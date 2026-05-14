@@ -2,19 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import LoginForm from '../../components/loginForm';
-import { authService } from '../../services/auth/authService'; 
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth(); 
   
-  //Mem user data
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  //Callback for login button
   const handleLogin = async () => {
-    //Check if complete data
     if (!identifier.trim() || !password.trim()) {
       Alert.alert('Error', 'Inserisci email/username e password.');
       return;
@@ -23,24 +21,16 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      await authService.login({ 
+      await login({                       
         identifier: identifier.trim(), 
         password: password 
       });
 
-      Alert.alert('Successo', 'Login effettuato con successo!');
-      
-      //router.replace('/');
-
-      console.log("LoginEnd!")
+      router.replace('/(customer)/(tabs)');
       
     } catch (error: any) {
-      console.error('Errore durante il login:', error);
-      
-      //Get error message
       const serverMessage = error.response?.data?.message || 'Credenziali non valide o server non raggiungibile.';
       Alert.alert('Accesso Negato', serverMessage);
-      
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +58,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f9fa', // Uno sfondo grigio chiarissimo elegante
+    backgroundColor: '#f8f9fa', 
   },
   title: {
     fontSize: 32,

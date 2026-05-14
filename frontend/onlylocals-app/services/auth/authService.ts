@@ -4,18 +4,15 @@ import { LoginCredentials, LoginResponse } from '../../types/auth';
 
 export const authService = {
   login: async (credentials: LoginCredentials) => {
-    //post backend
     const response = await apiClient.post<LoginResponse>('/users/login', credentials);
-    
-    //extract response
-    const { accessToken, refreshToken, message } = response.data;
-    
-    //save tokens
+    const { accessToken, refreshToken, message} = response.data; 
+
     await tokenService.setTokens(accessToken, refreshToken);
-    
-    //debug
     console.log("Login :", message);
-    return true; 
+    
+    const userResponse = await apiClient.get('/users/me');
+    const role = userResponse.data?.role ?? null;
+    return { role };
   },
 
   logout: async () => {
