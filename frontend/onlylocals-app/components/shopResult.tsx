@@ -1,303 +1,212 @@
-// components/ShopResult.tsx
-import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Mapbox from '@rnmapbox/maps';
+import React, { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Shop } from '../types/shop';
 
-// Definiamo le Props necessarie per la visualizzazione
+// Configurazione Token Mapbox
+Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
+
 interface ShopResultProps {
   isLoading: boolean;
   errorMessage: string;
   shopData: Shop | null;
 }
 
-export default function ShopResult({ 
-  isLoading, 
-  errorMessage, 
-  shopData 
-}: ShopResultProps) {
-  
-  // 1. Stato di caricamento
+const giorniSettimana = [
+  'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'
+];
+
+export default function ShopResult({ isLoading, errorMessage, shopData }: ShopResultProps) {
+  const [isFavorite, setIsFavorite] = useState(false); 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Calcolo indice giorno (Lun=0, Dom=6)
+  const getOggiIndex = () => {
+    const day = new Date().getDay(); 
+    return day === 0 ? 6 : day - 1;
+  };
+
+  const [giornoSelezionato, setGiornoSelezionato] = useState<string>(giorniSettimana[getOggiIndex()]);
+  const [fasciaSelezionata, setFasciaSelezionata] = useState<'mattina' | 'pomeriggio' | 'sera'>('mattina');
+
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#007bff" />
-        <Text style={styles.loadingText}>Recupero dati dal server...</Text>
+        <Text style={styles.loadingText}>Caricamento...</Text>
       </View>
     );
   }
 
-  // 2. Stato di errore
-  if (errorMessage) {
+  if (errorMessage || !shopData) {
     return (
-      <View style={[styles.centerContainer, styles.errorBox]}>
-        <Text style={styles.errorText}>error {errorMessage}</Text>
+      <View style={styles.centerContainer}>
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{errorMessage || "Dati non disponibili"}</Text>
+        </View>
       </View>
     );
   }
 
-  // 3. Stato di successo (Dati ricevuti)
-  // 3. Stato di successo (Dati ricevuti e formattati)
-  if (shopData) {
-    const { itinerario, events, promotions } = shopData;
-    const lunediMattina = itinerario?.lunedi?.mattina;
+  const { events, itinerario } = shopData;
+  const datiGiorno = itinerario[giornoSelezionato as keyof typeof itinerario];
+  const posizioneAttuale = datiGiorno ? datiGiorno[fasciaSelezionata] : null;
+
+  const renderFasciaTab = (label: string, tipo: 'mattina' | 'pomeriggio' | 'sera') => {
+    const isDisponibile = datiGiorno && datiGiorno[tipo] !== null;
+    const isActive = fasciaSelezionata === tipo;
 
     return (
-      <ScrollView style={styles.dataContainer} showsVerticalScrollIndicator={false}>
-        {/* HEADER: Titolo e Descrizione */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.categoryBadge}>
-            {shopData.category?.[0] || "Negozio"}
-          </Text>
-          <Text style={styles.shopName}>{shopData.name}</Text>
-          <Text style={styles.description}>{shopData.description}</Text>
-        </View>
+      <TouchableOpacity
+        disabled={!isDisponibile}
+        onPress={() => setFasciaSelezionata(tipo)}
+        style={[styles.fasciaTab, isActive && styles.fasciaTabActive, !isDisponibile && styles.fasciaTabDisabled]}
+      >
+        <Text style={[styles.fasciaTabText, isActive && styles.fasciaTabTextActive, !isDisponibile && styles.fasciaTabTextDisabled]}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
-        <View style={styles.divider} />
-
-        {/* POSIZIONE: Itinerario */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>📍 Dove trovarci</Text>
-          {lunediMattina ? (
-            <View style={styles.card}>
-              <Text style={styles.label}>Lunedì Mattina:</Text>
-              <Text style={styles.addressText}>{lunediMattina.indirizzo}</Text>
-              <View style={styles.coordBadge}>
-                <Text style={styles.coordText}>
-                  Lat: {lunediMattina.location.coordinates[1]} | Lon: {lunediMattina.location.coordinates[0]}
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <Text style={styles.noData}>Nessun itinerario inserito per oggi.</Text>
-          )}
-        </View>
-
-        {/* EVENTI: Lista dinamica */}
-        <View style={styles.infoSection}>
-  <Text style={styles.sectionTitle}>📅 Eventi in Programma</Text>
-  {events && events.length > 0 ? (
-    events.map((event, index) => {
-      // Gestione sicura della data per evitare errori TS e problemi di localizzazione
-      const dateObj = new Date(event.date);
-      const mesi = ["GEN", "FEB", "MAR", "APR", "MAG", "GIU", "LUG", "AGO", "SET", "OTT", "NOV", "DIC"];
+  return (
+    <ScrollView style={styles.dataContainer} showsVerticalScrollIndicator={false}>
       
-      const giorno = dateObj.getDate();
-      const mese = mesi[dateObj.getMonth()];
-
-      return (
-        <View key={index} style={styles.eventCard}>
-          <View style={styles.eventDateBox}>
-            <Text style={styles.eventDay}>{giorno}</Text>
-            <Text style={styles.eventMonth}>{mese}</Text>
-          </View>
-          <View style={styles.eventDetails}>
-            <Text style={styles.eventName}>{event.name}</Text>
-            <Text style={styles.eventDesc}>{event.description}</Text>
-          </View>
+      {/* HEADER */}
+      <View style={styles.sectionHeader}>
+        <View style={styles.rowBetween}>
+          <Text style={styles.categoryBadge}>{shopData.category?.[0] || "Shop"}</Text>
+          <TouchableOpacity onPress={() => setIsFavorite(!isFavorite)} style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}>
+            <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={24} color="#fa5252" />
+          </TouchableOpacity>
         </View>
-      );
-    })
-  ) : (
-    <Text style={styles.noData}>Nessun evento previsto al momento.</Text>
-  )}
-</View>
+        <Text style={styles.shopName}>{shopData.name}</Text>
+        <View style={styles.ratingContainer}><Ionicons name="star" size={20} color="#fcc419" /></View>
+        <Text style={styles.description}>{shopData.description}</Text>
+      </View>
 
-        {/* PROMOZIONI */}
-        {promotions && promotions.length > 0 && (
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>🎁 Promozioni</Text>
-            {/* Logica simile agli eventi se vuoi listarle */}
-          </View>
+      <View style={styles.divider} />
+
+      {/* ITINERARIO */}
+      <View style={[styles.infoSection, { zIndex: 2000 }]}>
+        <Text style={styles.sectionTitle}>📍 Dove trovarci</Text>
+        
+        <TouchableOpacity style={styles.customPickerHeader} onPress={() => setIsMenuOpen(!isMenuOpen)}>
+          <Text style={styles.pickerValueText}>{giornoSelezionato.charAt(0).toUpperCase() + giornoSelezionato.slice(1)}</Text>
+          <Ionicons name={isMenuOpen ? "chevron-up" : "chevron-down"} size={20} color="#6c757d" />
+        </TouchableOpacity>
+
+        {isMenuOpen && (
+          <View style={styles.customPickerOptions}>
+            {giorniSettimana.map((g) => (
+              <TouchableOpacity key={g} style={[styles.optionItem, giornoSelezionato === g && styles.optionItemActive]}
+                onPress={() => { setGiornoSelezionato(g); setFasciaSelezionata('mattina'); setIsMenuOpen(false); }}>
+                <Text style={[styles.optionText, giornoSelezionato === g && styles.optionTextActive]}>
+                  {g.charAt(0).toUpperCase() + g.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>            
         )}
-      </ScrollView>
-    );
-  }
 
-  // Se non c'è caricamento, non ci sono errori e non ci sono dati, non mostriamo nulla (stato iniziale)
-  return null;
+        <View style={styles.fasceRow}>
+          {renderFasciaTab("Mattina", "mattina")}
+          {renderFasciaTab("Pomeriggio", "pomeriggio")}
+          {renderFasciaTab("Sera", "sera")}
+        </View>
+
+        {posizioneAttuale && posizioneAttuale.location ? (
+          <View style={styles.mapCardContainer}>
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationLabel}>Posizione {fasciaSelezionata}</Text>
+              <Text style={styles.addressText}>{posizioneAttuale.indirizzo}</Text>
+            </View>
+
+            <View style={styles.mapWrapper}>
+              <Mapbox.MapView 
+                style={styles.map} 
+                styleURL={Mapbox.StyleURL.Outdoors}
+                logoEnabled={false}
+                attributionEnabled={false}
+              >
+                <Mapbox.Camera 
+                  zoomLevel={14} 
+                  centerCoordinate={posizioneAttuale.location.coordinates}
+                  animationMode={'flyTo'}
+                  animationDuration={1000}
+                />
+                <Mapbox.PointAnnotation id="marker" coordinate={posizioneAttuale.location.coordinates}>
+                  <View style={styles.markerContainer}><View style={styles.markerCore} /></View>
+                </Mapbox.PointAnnotation>
+              </Mapbox.MapView>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.emptyCard}><Text style={styles.noData}>Chiuso o nessun dato.</Text></View>
+        )}
+      </View>
+
+      <View style={styles.divider} />
+      
+      {/* EVENTI */}
+      <View style={styles.infoSection}>
+         <Text style={styles.sectionTitle}>📅 Eventi</Text>
+         {events?.length > 0 ? (
+           events.map((e, i) => (
+             <View key={i} style={styles.eventCard}><Text style={styles.eventName}>{e.name}</Text></View>
+           ))
+         ) : <Text style={styles.noData}>Nessun evento.</Text>}
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    // Container di base
-    centerContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-      marginTop: 30,
-    },
-    
-    // Container Principale dei Dati
-    dataContainer: {
-      alignSelf: 'center',
-      width: '100%',
-      maxWidth: 600,
-      backgroundColor: '#ffffff',
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#dee2e6',
-      marginTop: 10,
-      padding: 20,
-      // Ombre
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 4,
-    },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  dataContainer: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
+  sectionHeader: { marginTop: 20 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  categoryBadge: { backgroundColor: '#e7f3ff', color: '#007bff', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 5, fontSize: 12, fontWeight: 'bold' },
+  favoriteButton: { padding: 8, backgroundColor: '#fff5f5', borderRadius: 20 },
+  favoriteButtonActive: { backgroundColor: '#ffe3e3' },
+  shopName: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 5 },
+  description: { fontSize: 15, color: '#6c757d' },
+  divider: { height: 1, backgroundColor: '#eee', marginVertical: 20 },
+  infoSection: { marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
   
-    // Header e Badge
-    sectionHeader: {
-      marginBottom: 20,
-    },
-    categoryBadge: {
-      backgroundColor: '#e7f3ff',
-      color: '#007bff',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 6,
-      fontSize: 12,
-      fontWeight: 'bold',
-      alignSelf: 'flex-start',
-      marginBottom: 8,
-      textTransform: 'uppercase',
-    },
-    shopName: {
-      fontSize: 26,
-      fontWeight: 'bold',
-      color: '#212529',
-      letterSpacing: -0.5,
-    },
-    description: {
-      fontSize: 16,
-      color: '#6c757d',
-      marginTop: 6,
-      lineHeight: 22,
-    },
-  
-    // Sezioni e Titoli
-    infoSection: {
-      marginTop: 20,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: '#343a40',
-      marginBottom: 12,
-    },
-  
-    // Card per Indirizzo ed Eventi
-    card: {
-      backgroundColor: '#f8f9fa',
-      borderRadius: 10,
-      padding: 15,
-      borderWidth: 1,
-      borderColor: '#eceef0',
-    },
-    label: {
-      fontSize: 13,
-      color: '#868e96',
-      fontWeight: '600',
-      marginBottom: 2,
-    },
-    addressText: {
-      fontSize: 16,
-      color: '#212529',
-      fontWeight: '500',
-    },
-    
-    // Eventi
-    eventCard: {
-      flexDirection: 'row',
-      backgroundColor: '#ffffff',
-      borderRadius: 10,
-      padding: 12,
-      marginBottom: 10,
-      borderWidth: 1,
-      borderColor: '#f1f3f5',
-      // Effetto rilievo leggero per le card interne
-      elevation: 1,
-    },
-    eventDateBox: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingRight: 15,
-      borderRightWidth: 1,
-      borderRightColor: '#eee',
-      minWidth: 55,
-    },
-    eventDay: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: '#007bff',
-    },
-    eventMonth: {
-      fontSize: 11,
-      color: '#adb5bd',
-      fontWeight: '700',
-    },
-    eventDetails: {
-      flex: 1,
-      paddingLeft: 15,
-      justifyContent: 'center',
-    },
-    eventName: {
-      fontSize: 15,
-      fontWeight: 'bold',
-      color: '#212529',
-    },
-    eventDesc: {
-      fontSize: 13,
-      color: '#6c757d',
-    },
-  
-    // Stati di Caricamento ed Errore
-    loadingText: {
-      marginTop: 15,
-      color: '#6c757d',
-      fontSize: 16,
-    },
-    errorBox: {
-      backgroundColor: '#fff5f5',
-      borderColor: '#ffc9c9',
-      borderWidth: 1,
-      borderRadius: 10,
-      padding: 15,
-    },
-    errorText: {
-      color: '#fa5252',
-      fontSize: 16,
-      fontWeight: '600',
-      textAlign: 'center',
-    },
-    noData: {
-      fontSize: 14,
-      color: '#adb5bd',
-      fontStyle: 'italic',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#e9ecef', // Grigio chiarissimo per non appesantire
-        marginVertical: 20,
-        width: '100%',
-      },
-      
-    coordBadge: {
-        marginTop: 12,
-        backgroundColor: '#f1f3f5', // Sfondo neutro
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 6,
-        alignSelf: 'flex-start',
-        borderWidth: 1,
-        borderColor: '#dee2e6',
-        borderStyle: 'dashed', // Effetto "coordinate/mappa"
-      },
-      
-    coordText: {
-        fontSize: 12,
-        fontFamily: 'monospace', // Font tecnico
-        color: '#007bff',        // Colore che richiama i link/mappe
-        fontWeight: '500',
-      }
-  });
+  customPickerHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 15, backgroundColor: '#f8f9fa', borderRadius: 10, borderWidth: 1, borderColor: '#ddd' },
+  pickerValueText: { fontSize: 16, fontWeight: '500' },
+  customPickerOptions: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginTop: 5, elevation: 5 },
+  optionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  optionItemActive: { backgroundColor: '#e7f3ff' },
+  optionText: { color: '#444' },
+  optionTextActive: { color: '#007bff', fontWeight: 'bold' },
+
+  fasceRow: { flexDirection: 'row', marginTop: 15, marginBottom: 15 },
+  fasciaTab: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ddd', marginHorizontal: 2 },
+  fasciaTabActive: { backgroundColor: '#007bff', borderColor: '#007bff' },
+  fasciaTabDisabled: { backgroundColor: '#f9f9f9', opacity: 0.4 },
+  fasciaTabText: { fontSize: 12, fontWeight: '600' },
+  fasciaTabTextActive: { color: '#fff' },
+  fasciaTabTextDisabled: { color: '#999' },
+
+  mapCardContainer: { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#ddd' },
+  locationInfo: { padding: 15, backgroundColor: '#f0f7ff' },
+  locationLabel: { fontSize: 10, color: '#007bff', fontWeight: 'bold', textTransform: 'uppercase' },
+  addressText: { fontSize: 15, fontWeight: '500', marginTop: 2 },
+  mapWrapper: { height: 180, width: '100%' },
+  map: { flex: 1 },
+  markerContainer: { height: 24, width: 24, backgroundColor: 'rgba(0,123,255,0.2)', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  markerCore: { height: 12, width: 12, backgroundColor: '#007bff', borderRadius: 6, borderWidth: 2, borderColor: '#fff' },
+
+  emptyCard: { padding: 20, backgroundColor: '#f8f9fa', borderRadius: 10, alignItems: 'center' },
+  eventCard: { backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 8 },
+  eventName: { fontWeight: 'bold' },
+  noData: { color: '#aaa', fontStyle: 'italic' },
+  loadingText: { marginTop: 10 },
+  errorBox: { padding: 20, backgroundColor: '#fff5f5', borderRadius: 10 },
+  errorText: { color: '#fa5252', textAlign: 'center' },
+  ratingContainer: { marginLeft: 10 }
+});
