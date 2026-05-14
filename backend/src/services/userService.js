@@ -146,6 +146,10 @@ exports.addShopToFavorites = async (userId, shopId) => {
   user.savedShops.push(shopId);
   await user.save();
 
+  shop.statistiche.numSalvataggi += 1;
+  shop.markModified('statistiche');
+  await shop.save();
+
   return user.savedShops;
 }
 
@@ -212,3 +216,10 @@ exports.updatePersonalData = async (userId, newInfo) => {
   
   return changes;
 }
+
+exports.getUserData = async (userId) =>{
+  const user = await User.findById(userId).select('-auth'); //pswd and token are never send to client
+  if(!user) throw new Error("User not found");
+  return user;
+};
+

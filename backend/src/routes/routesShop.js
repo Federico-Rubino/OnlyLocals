@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const shopController = require('../controllers/shopController');
 const authMiddleware = require('../middlewares/authMiddleware');
-
 /**
  * @openapi
  * /api/shops/register:
@@ -104,6 +103,57 @@ router.post('/register', authMiddleware.autenticateToken, shopController.registe
  *                         type: string
  */
 router.get('/search', shopController.searchShops);
+
+/**
+ * @openapi
+ * /api/shops/statistiche:
+ *   get:
+ *     summary: Get shop statistics
+ *     description: Returns all statistics of the vendor's shop
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Shop statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     nomeShop:
+ *                       type: string
+ *                     statistiche:
+ *                       type: object
+ *                       properties:
+ *                         numSalvataggi:
+ *                           type: integer
+ *                         votoMedio:
+ *                           type: number
+ *                         totaleFeedback:
+ *                           type: integer
+ *                         mappaAccessi:
+ *                           type: array
+ *                         storicoFeedback:
+ *                           type: array
+ *                         ultimoAggiornamento:
+ *                           type: string
+ *                           format: date-time
+ *       403:
+ *         description: Not a vendor
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/statistiche', authMiddleware.autenticateToken, shopController.getStatistiche);
+
 
 /**
  * @openapi
@@ -350,5 +400,137 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
  *         description: Server error
  */
 router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
+
+
+/**
+ * @openapi
+ * /api/shops/{shopId}/feedback:
+ *   post:
+ *     summary: Add feedback to a shop
+ *     description: Allows an authenticated user to leave a feedback on a shop
+ *     tags:
+ *       - Feedback
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: shopId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Shop ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - voto
+ *             properties:
+ *               voto:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 4
+ *               commento:
+ *                 type: string
+ *                 example: "Ottimo servizio!"
+ *     responses:
+ *       201:
+ *         description: Feedback aggiunto con successo
+ *       400:
+ *         description: Voto non valido
+ *       404:
+ *         description: Shop non trovato
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/:shopId/feedback', authMiddleware.autenticateToken, shopController.addFeedback);
+
+
+/**
+ * @openapi
+ * /api/shops/update:
+ *   put:
+ *     summary: Update shop data
+ *     description: Allows a vendor to update their shop information
+ *     tags:
+ *       - Shops 
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Frutta Mario"
+ *               description:
+ *                 type: string
+ *                 example: "Il migliore fruttivendolo di Trento"
+ *               itinerario:
+ *                 type: object
+ *                 example:
+ *                   lunedi:
+ *                     mattina:
+ *                       latitudine: 46.07
+ *                       longitudine: 11.12
+ *                       indirizzo: "Via Roma, Trento"
+ *               events:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     date:
+ *                       type: string
+ *                       format: date-time
+ *               promotions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     description:
+ *                       type: string
+ *                     value:
+ *                       type: number
+ *                     startDate:
+ *                       type: string
+ *                       format: date-time
+ *                     endDate:
+ *                       type: string
+ *                       format: date-time
+ *     responses:
+ *       200:
+ *         description: Shop updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 results:
+ *                   type: object
+ *       400:
+ *         description: No data provided
+ *       403:
+ *         description: Not a vendor
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/update', authMiddleware.autenticateToken, shopController.updateShop);
+
 
 module.exports = router;

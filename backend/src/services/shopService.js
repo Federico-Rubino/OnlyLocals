@@ -1,10 +1,21 @@
 const Shop = require('../models/shopModel');
 const User = require('../models/userModel');
 
+
 exports.getShopById = async (id) =>{
   const shop = await Shop.findById(id);
+
+  if(shop){
+    shop.statistiche.mappaAccessi.push({
+        data: new Date(),
+        valore: 1
+    });
+    shop.markModified('statistiche');
+    await shop.save();
+  }
   return shop;
 }
+
 
 
 exports.registerShop = async (data) => {
@@ -37,7 +48,14 @@ exports.registerShop = async (data) => {
         events: data.events || [],
         promotions: data.promotions || [],
         fidelityCardManager: data.fidelityCardManager,
-        statistiche: data.statistiche
+        statistiche:{
+            numSalvataggi:       0,
+            mappaAccessi:        [],
+            storicoFeedback:     [],
+            votoMedio:           0,
+            totaleFeedback:      0,
+            ultimoAggiornamento: new Date()
+        }
     };
 
     return Shop.create(shop);
@@ -188,3 +206,76 @@ exports.deletePromotion = async (vendorId, description) => {
 
     return shop.promotions;
 };
+
+
+exports.getStatistiche = async (vendorId) =>{
+    const shop = await getShopFromVendor(vendorId);
+
+    return await Shop.findById(shop._id).populate('statistiche.storicoFeedback').select('statistiche name');
+}
+
+
+
+exports.addFeedback = async (userId, shopId, data) =>{
+    const shop = await Shop.findById(shopId);
+    if(!shop) throw new Error("Shop not found");
+
+    const user = await User.findById(userId);
+    if(!user) throw new Error("User not found");
+
+    if (!shop.statistiche) {
+        shop.statistiche = {
+            numSalvataggi:0,
+            mappaAccessi: [],
+            storicoFeedback:[],
+            votoMedio:0,
+            totaleFeedback:0,
+            ultimoAggiornamento: null
+        };
+    }
+
+    const nuovoFeedback = {
+        voto: data.voto,
+        commento: data.commento,
+        user: userId,
+        data: new Date()
+   };
+
+    shop.statistiche.storicoFeedback.push(nuovoFeedback);
+    shop.statistiche.totaleFeedback = shop.statistiche.storicoFeedback.length;
+
+    const sommaVoti = shop.statistiche.storicoFeedback.reduce((acc, f) => acc + f.voto, 0);
+    shop.statistiche.votoMedio = (
+    sommaVoti / shop.statistiche.storicoFeedback.length).toFixed(1);
+
+    shop.statistiche.ultimoAggiornamento = new Date();
+    shop.markModified('statistiche');
+
+    await shop.save();
+    return nuovoFeedback;
+};
+
+
+
+exports.updateShop = async (vendorId, newData) =>{
+    const shop = await getShopFromVendor(vendorId);
+
+    const change = {};
+    if (newData.name){shop.name = newData.name; change.name = newData.name;}
+    if (newData.description){shop.description = newData.description; change.description = newData.description;}
+
+    if(newData.itinerario){
+        const giorni = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+        giorni.forEach(giorno =>{
+            if(newData.itinerario[giorno]){
+                shop.itinerario[giorno] = newData.itinerario[giorno];
+                change[giorno] = newData.itinerario[giorno];
+            }
+        });
+    }
+    if(newData.events){shop.events = newData.events; change.events = newData.events;}
+    if(newData.promotions){shop.promotions = newData.promotions; change.promotions = newData.promotions;}
+    
+    await shop.save();
+    return change; 
+}
