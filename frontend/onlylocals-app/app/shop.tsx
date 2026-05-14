@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Keyboard, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 // 1. Importiamo il servizio per la chiamata API
-import { getShopById } from '../services/shopServices';
+import { shopService } from '../services/shopServices';
 
 // 2. Importiamo il tipo per i dati
 import { Shop } from '../types/shop';
@@ -36,7 +36,7 @@ export default function ShopSearchScreen() {
 
     try {
       // Usiamo il servizio isolato
-      const data = await getShopById(shopId);
+      const data = await shopService.getShopById(shopId);
       setShopData(data);
     } catch (error: any) {
       // Gestione errori ottimizzata per Axios
