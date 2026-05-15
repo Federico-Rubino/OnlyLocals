@@ -7,3 +7,28 @@ export const getShopById = async (id: string): Promise<Shop> => {
   
   return response.data.data; 
 };
+
+export const addPromozione = async (data: {
+  description: string;
+  value: string;
+  startDate: string;
+  endDate: string;
+}): Promise<void> => {
+  await apiClient.post('/shops/promotion', data);
+};
+
+export const deletePromozione = async (description: string): Promise<void> => {
+  await apiClient.delete(`/shops/promotion?description=${encodeURIComponent(description)}`);
+};
+
+export const addEvento = async (data: {
+  name: string;
+  description: string;
+  date: string;
+}): Promise<void> => {
+  await apiClient.post('/shops/event', data);
+};
+
+export const deleteEvento = async (name: string): Promise<void> => {
+  await apiClient.delete('/shops/event', { data: { name } });
+};

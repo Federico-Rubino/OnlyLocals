@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 
 // Hardcoded test user
 const TEST_USER = {
-  isLoggedIn: false, 
-  role: 'customer'  
+  isLoggedIn: true, 
+  role: 'vendor'  
 };
 
 export default function RootLayout() {
