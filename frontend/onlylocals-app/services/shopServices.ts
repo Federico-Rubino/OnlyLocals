@@ -32,3 +32,10 @@ export const addEvento = async (data: {
 export const deleteEvento = async (name: string): Promise<void> => {
   await apiClient.delete('/shops/event', { data: { name } });
 };
+
+export const updateShop = async (data: {
+  name: string;
+  description: string;
+}): Promise<void> => {
+  await apiClient.put('/shops/update', data);
+};

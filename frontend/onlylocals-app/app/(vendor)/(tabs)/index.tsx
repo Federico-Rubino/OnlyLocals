@@ -14,17 +14,16 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById } from '../../../services/shopServices';
-/*import { router } from 'expo-router';
-const [shopName, setShopName] = useState('');
-const [shopDescription, setShopDescription] = useState(''); */
+import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById, updateShop } from '../../../services/shopServices';
+//import { router } from 'expo-router';
 
 
+/*
 const MOCK_VENDOR = {
   name: 'Cartoleria Zatti',
   description: 'La migliore cartoleria della città',
   openingHours: 'Lun-Ven: 9:00-19:00, Sab: 10:00-18:00',
-};
+};*/
 
 type Promozione = { id: number; nome: string; sconto: string; };
 type Evento = { id: number; titolo: string; descrizione: string; };
@@ -37,11 +36,13 @@ const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
 export default function VetrinaScreen() {
   const [promozioni, setPromozioni] = useState<Promozione[]>([]);
   const [eventi, setEventi] = useState<Evento[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [shopName, setShopName] = useState('');
+  const [shopDescription, setShopDescription] = useState('');
 
   const [sheetType, setSheetType] = useState<BottomSheetType>(null);
   const [formType, setFormType] = useState<FormType>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
 
   const [promoNome, setPromoNome] = useState('');
   const [promoSconto, setPromoSconto] = useState('');
@@ -54,10 +55,16 @@ export default function VetrinaScreen() {
   const [eventoDate, setEventoDate] = useState('');
   const [eventoToDelete, setEventoToDelete] = useState('');
 
+  const [shopModalVisible, setShopModalVisible] = useState(false);
+  const [editShopData, setEditShopData] = useState({ name: shopName, description: shopDescription });
+
     useEffect(() => {
     const loadShop = async () => {
       try {
         const shop = await getShopById(SHOP_ID);
+        setShopName(shop.name);
+        setShopDescription(shop.description);
+        setEditShopData({ name: shop.name, description: shop.description });
         setPromozioni(shop.promotions.map((p: any, i: number) => ({
           id: i,
           nome: p.description,
@@ -86,6 +93,7 @@ export default function VetrinaScreen() {
 
         setShopName(shop.name);
         setShopDescription(shop.description);
+        setEditShopData({ name: shop.name, description: shop.description }); 
         setPromozioni(shop.promotions.map((p: any, i: number) => ({
           id: i,
           nome: p.description,
@@ -118,6 +126,8 @@ export default function VetrinaScreen() {
   const closeSheet = () => setSheetType(null);
   const openForm = (type: FormType) => { closeSheet(); setFormType(type); };
   const closeForm = () => setFormType(null);
+
+  
 
   const savePromozione = async () => {
     if (!promoNome.trim() || !promoSconto.trim() || !promoStartDate.trim() || !promoEndDate.trim()) {
@@ -212,6 +222,28 @@ export default function VetrinaScreen() {
     }
   };
 
+  const saveShop = async () => {
+  if (!editShopData.name.trim()) {
+    Alert.alert('Attenzione', 'Il nome è obbligatorio.');
+    return;
+  }
+  setLoading(true);
+  try {
+    await updateShop({
+      name: editShopData.name.trim(),
+      description: editShopData.description.trim(),
+    });
+    setShopName(editShopData.name.trim());
+    setShopDescription(editShopData.description.trim());
+    setShopModalVisible(false);
+    Alert.alert('Successo', 'Negozio aggiornato!');
+  } catch (err: any) {
+    Alert.alert('Errore', err.response?.data?.message || 'Impossibile aggiornare il negozio');
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <ScrollView
       style={styles.container}
@@ -224,10 +256,9 @@ export default function VetrinaScreen() {
 
       {/* Card Negozio */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>{MOCK_VENDOR.name}</Text>
-        <Text style={styles.cardText}>{MOCK_VENDOR.description}</Text>
-        <Text style={styles.cardText}>{MOCK_VENDOR.openingHours}</Text>
-        <TouchableOpacity style={styles.editBtn}>
+        <Text style={styles.cardTitle}>{shopName}</Text>
+        <Text style={styles.cardText}>{shopDescription}</Text>
+        <TouchableOpacity style={styles.editBtn} onPress={()=>setShopModalVisible(true)}>
           <Ionicons name="pencil-outline" size={18} color="#888" />
         </TouchableOpacity>
       </View>
@@ -265,6 +296,39 @@ export default function VetrinaScreen() {
           <Ionicons name="pencil-outline" size={18} color="#888" />
         </TouchableOpacity>
       </View>
+
+       {/* Modal: modifica negozio */}
+      <Modal visible={shopModalVisible} transparent animationType="slide" onRequestClose={() => setShopModalVisible(false)}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Modifica negozio</Text>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Nome</Text>
+              <TextInput
+                style={styles.input}
+                value={editShopData.name}
+                onChangeText={v => setEditShopData(p => ({ ...p, name: v }))}
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Descrizione</Text>
+              <TextInput
+                style={[styles.input, styles.textarea]}
+                value={editShopData.description}
+                onChangeText={v => setEditShopData(p => ({ ...p, description: v }))}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+            <TouchableOpacity style={styles.primaryBtn} onPress={saveShop} disabled={loading}>
+              <Text style={styles.primaryBtnText}>{loading ? 'Salvataggio...' : 'Salva'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShopModalVisible(false)}>
+              <Text style={styles.cancelText}>Annulla</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Bottom Sheet: scelta azione */}
       <Modal visible={sheetType !== null} transparent animationType="slide" onRequestClose={closeSheet}>
