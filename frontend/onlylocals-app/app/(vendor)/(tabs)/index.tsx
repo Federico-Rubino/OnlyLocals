@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Modal,
@@ -11,9 +12,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { addEvento, addPromozione, deleteEvento, deletePromozione } from '../../../services/shopServices';
+import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById } from '../../../services/shopServices';
+/*import { router } from 'expo-router';
+const [shopName, setShopName] = useState('');
+const [shopDescription, setShopDescription] = useState(''); */
+
 
 const MOCK_VENDOR = {
   name: 'Cartoleria Zatti',
@@ -26,18 +31,17 @@ type Evento = { id: number; titolo: string; descrizione: string; };
 type BottomSheetType = 'promozioni' | 'eventi' | null;
 type FormType = 'nuovaPromo' | 'eliminaPromo' | 'nuovoEvento' | 'eliminaEvento' | null;
 
+// TODO: sostituire con shop._id preso dal context auth dopo il login
+const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
+
 export default function VetrinaScreen() {
-  const [promozioni, setPromozioni] = useState<Promozione[]>([
-    { id: 1, nome: 'Collana Hoepli', sconto: '20' },
-    { id: 2, nome: 'Agende 2026', sconto: '30' },
-  ]);
-  const [eventi, setEventi] = useState<Evento[]>([
-    { id: 1, titolo: 'Apertura straordinaria:', descrizione: 'mercoledì 29 febbraio dalle 18 alle 23' },
-  ]);
+  const [promozioni, setPromozioni] = useState<Promozione[]>([]);
+  const [eventi, setEventi] = useState<Evento[]>([]);
 
   const [sheetType, setSheetType] = useState<BottomSheetType>(null);
   const [formType, setFormType] = useState<FormType>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
 
   const [promoNome, setPromoNome] = useState('');
   const [promoSconto, setPromoSconto] = useState('');
@@ -49,6 +53,66 @@ export default function VetrinaScreen() {
   const [eventoDesc, setEventoDesc] = useState('');
   const [eventoDate, setEventoDate] = useState('');
   const [eventoToDelete, setEventoToDelete] = useState('');
+
+    useEffect(() => {
+    const loadShop = async () => {
+      try {
+        const shop = await getShopById(SHOP_ID);
+        setPromozioni(shop.promotions.map((p: any, i: number) => ({
+          id: i,
+          nome: p.description,
+          sconto: p.value,
+        })));
+        setEventi(shop.events.map((e: any, i: number) => ({
+          id: i,
+          titolo: e.name,
+          descrizione: e.description,
+        })));
+      } catch (err) {
+        Alert.alert('Errore', 'Impossibile caricare i dati del negozio');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    loadShop();
+  }, []);
+
+  /*  useEffect(() => {
+    const loadShop = async () => {
+      try {
+        // prendi shopId dal context auth
+        const { shopId } = useAuthContext();
+        const shop = await getShopById(shopId);
+
+        setShopName(shop.name);
+        setShopDescription(shop.description);
+        setPromozioni(shop.promotions.map((p: any, i: number) => ({
+          id: i,
+          nome: p.description,
+          sconto: p.value,
+        })));
+        setEventi(shop.events.map((e: any, i: number) => ({
+          id: i,
+          titolo: e.name,
+          descrizione: e.description,
+        })));
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          router.replace('/(auth)/login');
+          return;
+        }
+        Alert.alert('Errore', 'Impossibile caricare i dati del negozio');
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    loadShop();
+  }, []);*/
+
+
+ 
+  if (loadingData) return <ActivityIndicator style={{ flex: 1 }} />;
+
 
   const openSheet = (type: BottomSheetType) => setSheetType(type);
   const closeSheet = () => setSheetType(null);
@@ -101,12 +165,23 @@ export default function VetrinaScreen() {
       Alert.alert('Attenzione', 'Compila titolo e data.');
       return;
     }
+
+    // Valida il formato YYYY-MM-DD
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(eventoDate.trim())) {
+      Alert.alert('Attenzione', 'Usa il formato YYYY-MM-DD (es. 2026-06-05)');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Forza formato ISO completo
+      const dataISO = `${eventoDate.trim()}T10:00:00.000Z`;
+      
       await addEvento({
         name: eventoTitolo.trim(),
         description: eventoDesc.trim(),
-        date: eventoDate.trim(),
+        date: dataISO,
       });
       setEventi(prev => [...prev, { id: Date.now(), titolo: eventoTitolo.trim(), descrizione: eventoDesc.trim() }]);
       closeForm();
@@ -119,6 +194,7 @@ export default function VetrinaScreen() {
   };
 
   const eliminaEvento = async () => {
+    console.log('Elimino evento:', eventoToDelete);
     if (!eventoToDelete.trim()) {
       Alert.alert('Attenzione', 'Seleziona un evento da eliminare.');
       return;
