@@ -5,6 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { Shop } from '../types/shop';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
+import { userService } from '../services/userServices';
 
 // Configurazione Token Mapbox
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
@@ -13,13 +14,14 @@ interface ShopResultProps {
   isLoading: boolean;
   errorMessage: string;
   shopData: Shop | null;
+  shopId: string;
 }
 
 const giorniSettimana = [
   'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'
 ];
 
-export default function ShopResult({ isLoading, errorMessage, shopData }: ShopResultProps) {
+export default function ShopResult({ isLoading, errorMessage, shopData, shopId }: ShopResultProps) {
   const [isFavorite, setIsFavorite] = useState(false); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -84,6 +86,12 @@ const handleFavoriteToggle = () => {
   }
   
   setIsFavorite(!isFavorite);
+  if (isFavorite == true){
+    userService.removeFavorites(shopId);
+  } else if (isFavorite == false){
+    userService.addFavorites(shopId);
+    
+  }
 };
 
   return (

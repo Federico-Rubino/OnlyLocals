@@ -47,6 +47,7 @@ export default function ShopDetailScreen() {
         shopData={shopData}
         isLoading={isLoading}
         errorMessage={errorMessage}
+        shopId={id}
       />
     </View>
   );
