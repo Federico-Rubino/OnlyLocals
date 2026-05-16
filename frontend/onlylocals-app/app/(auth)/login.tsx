@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import LoginForm from '../../components/loginForm';
 import { useAuth } from '../../context/AuthContext';
@@ -21,13 +21,8 @@ export default function LoginScreen() {
     setIsLoading(true);
 
     try {
-      await login({                       
-        identifier: identifier.trim(), 
-        password: password 
-      });
-
+      await login({ identifier: identifier.trim(), password });
       router.replace('/(customer)/(tabs)');
-      
     } catch (error: any) {
       const serverMessage = error.response?.data?.message || 'Credenziali non valide o server non raggiungibile.';
       Alert.alert('Accesso Negato', serverMessage);
@@ -48,6 +43,10 @@ export default function LoginScreen() {
         onLogin={handleLogin}
         isLoading={isLoading}
       />
+
+      <TouchableOpacity onPress={() => router.push('/(auth)/register')} style={styles.registerButton}>
+        <Text style={styles.registerText}>Non hai un account? <Text style={styles.registerLink}>Registrati</Text></Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -66,9 +65,15 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 16,
+  registerButton: {
+    marginTop: 20,
+  },
+  registerText: {
+    fontSize: 14,
     color: '#666',
-    marginBottom: 30,
+  },
+  registerLink: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
