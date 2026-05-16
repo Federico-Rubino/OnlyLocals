@@ -1,19 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Alert, Modal, ScrollView, StyleSheet,
+  ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
   Text, TextInput, TouchableOpacity, View
 } from 'react-native';
+import { UserProfile, userService } from '../../../services/userService';
 
-const MOCK_USER = {
-  name: 'Mario',
-  surname: 'Rossi',
-  email: 'mario.rossi@gmail.com',
-  bornDate: '1999-01-01',
-};
 
  const SETTINGS = [
     { id: 1, label: t('settings'),     icon: 'settings-outline', route: '/settings/settings' },
@@ -23,21 +18,7 @@ const MOCK_USER = {
 
 export default function ProfileScreen() {
   const { t } = useTranslation(); 
-  const [user, setUser] = useState(MOCK_USER);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editData, setEditData] = useState(MOCK_USER);
-
-  const birthDate = new Date(user.bornDate).toLocaleDateString('it-IT');
-
-  const handleSave = () => {
-    setUser(editData);
-    setModalVisible(false);
-    Alert.alert('Successo', 'Profilo aggiornato!');
-  };
-
-/*
-export default function ProfileScreen() {
-const { t } = useTranslation(); 
+  
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,7 +26,8 @@ const { t } = useTranslation();
     name: '', surname: '', email: '', bornDate: ''
   });
 
-  /*
+
+
   const loadProfile = useCallback(async () => {
     try {
       const data = await userService.getProfile();
@@ -57,8 +39,9 @@ const { t } = useTranslation();
         bornDate: data.bornDate
       });
     } catch (err: any) {
+      //se non auth redirect to login page
       if (err.response?.status === 401) {
-        router.replace('/(auth)/login');  // ← redirect al login
+        router.replace('/(auth)/login'); 
         return;
       }
       Alert.alert('Errore', 'Impossibile caricare il profilo');
@@ -86,7 +69,7 @@ const { t } = useTranslation();
   if (!user) return <Text style={styles.error}>Utente non trovato</Text>;
 
   const birthDate = new Date(user.bornDate).toLocaleDateString('it-IT');
-*/
+
   return (
     <ScrollView style={styles.container}
     contentContainerStyle={{paddingTop: 50}}>
