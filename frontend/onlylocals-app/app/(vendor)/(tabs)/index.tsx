@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,26 +15,19 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
 import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById, updateShop } from '../../../services/shopServices';
-//import { router } from 'expo-router';
-
-
-/*
-const MOCK_VENDOR = {
-  name: 'Cartoleria Zatti',
-  description: 'La migliore cartoleria della città',
-  openingHours: 'Lun-Ven: 9:00-19:00, Sab: 10:00-18:00',
-};*/
 
 type Promozione = { id: number; nome: string; sconto: string; };
 type Evento = { id: number; titolo: string; descrizione: string; };
 type BottomSheetType = 'promozioni' | 'eventi' | null;
 type FormType = 'nuovaPromo' | 'eliminaPromo' | 'nuovoEvento' | 'eliminaEvento' | null;
 
-// TODO: sostituire con shop._id preso dal context auth dopo il login
-const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
+//const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
 
 export default function VetrinaScreen() {
+ const {shopId} = useAuth();
+ //const shopId = SHOP_ID;
   const [promozioni, setPromozioni] = useState<Promozione[]>([]);
   const [eventi, setEventi] = useState<Evento[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -58,37 +52,10 @@ export default function VetrinaScreen() {
   const [shopModalVisible, setShopModalVisible] = useState(false);
   const [editShopData, setEditShopData] = useState({ name: shopName, description: shopDescription });
 
-    useEffect(() => {
-    const loadShop = async () => {
-      try {
-        const shop = await getShopById(SHOP_ID);
-        setShopName(shop.name);
-        setShopDescription(shop.description);
-        setEditShopData({ name: shop.name, description: shop.description });
-        setPromozioni(shop.promotions.map((p: any, i: number) => ({
-          id: i,
-          nome: p.description,
-          sconto: p.value,
-        })));
-        setEventi(shop.events.map((e: any, i: number) => ({
-          id: i,
-          titolo: e.name,
-          descrizione: e.description,
-        })));
-      } catch (err) {
-        Alert.alert('Errore', 'Impossibile caricare i dati del negozio');
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    loadShop();
-  }, []);
-
-  /*  useEffect(() => {
+     useEffect(() => {
     const loadShop = async () => {
       try {
         // prendi shopId dal context auth
-        const { shopId } = useAuthContext();
         const shop = await getShopById(shopId);
 
         setShopName(shop.name);
@@ -115,7 +82,7 @@ export default function VetrinaScreen() {
       }
     };
     loadShop();
-  }, []);*/
+  }, []);
 
 
  

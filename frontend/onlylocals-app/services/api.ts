@@ -13,8 +13,8 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
 
-    //const token = await tokenService.getAccessToken();
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWZhZWRhNDdiNzE1NGNhY2Y1YTgwNjYiLCJpYXQiOjE3Nzg4NTA2OTYsImV4cCI6MTc3ODg1MTU5Nn0.kYK5VqU3MkOg-WlYtyQBUlxsJEIkl7DU4lr02SCzPxc';
+    const token = await tokenService.getAccessToken();
+    //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWZhZWRhNDdiNzE1NGNhY2Y1YTgwNjYiLCJpYXQiOjE3Nzg4NTA2OTYsImV4cCI6MTc3ODg1MTU5Nn0.kYK5VqU3MkOg-WlYtyQBUlxsJEIkl7DU4lr02SCzPxc';
   
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
