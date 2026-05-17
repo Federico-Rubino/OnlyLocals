@@ -6,30 +6,82 @@ const authMiddleware = require('../middlewares/authMiddleware');
  * @openapi
  * /api/shops/register:
  *   post:
- *     summary: Register a new business
- *     description: Creates a shop. Note, coordinates follow the GeoJSON standard [longitude, latitude].
+ *     summary: Register a new shop
+ *     description: Creates a shop using itinerary-based geolocation. Locations are automatically computed from itinerary slots.
  *     tags:
  *       - Shops
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
- *           example:
- *             name: "Panificio Centrale"
- *             description: "Fresh bread and local pastries"
- *             category: ["Fruit and Vegetables"]
- *             itinerary:
- *               monday:
- *                 morning:
- *                   location:
- *                     type: "Point"
- *                     coordinates: [9.1900, 45.4642]
- *                   address: "Piazza Duomo, Milan"
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - category
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "La Bottega Italiana"
+ *               description:
+ *                 type: string
+ *                 example: "Shop specializing in Italian products"
+ *               category:
+ *                 type: string
+ *                 example: "food"
+ *               fidelityCardManager:
+ *                 type: string
+ *                 example: "64f1c2a8b9d1e2f3a4b5c6d7"
+ *               itinerario:
+ *                 type: object
+ *                 description: Weekly schedule with optional geolocation per slot
+ *                 additionalProperties:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       latitudine:
+ *                         type: number
+ *                         example: 45.4642
+ *                       longitudine:
+ *                         type: number
+ *                         example: 9.1900
+ *               events:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 example: []
+ *               promotions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 example: []
  *     responses:
  *       201:
- *         description: Shop successfully registered
+ *         description: Shop registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Shop registered successfully
+ *                 newRole:
+ *                   type: string
+ *                   example: owner
+ *                 id:
+ *                   type: string
+ *                   example: 64f1c2a8b9d1e2f3a4b5c6d7
  *       400:
- *         description: Invalid data
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Server error
  */
@@ -106,7 +158,7 @@ router.get('/search', shopController.searchShops);
 
 /**
  * @openapi
- * /api/shops/statistiche:
+ * /api/shops/stats:
  *   get:
  *     summary: Get shop statistics
  *     description: Returns all statistics of the vendor's shop
@@ -152,7 +204,7 @@ router.get('/search', shopController.searchShops);
  *       500:
  *         description: Internal server error
  */
-router.get('/statistiche', authMiddleware.autenticateToken, shopController.getStatistiche);
+router.get('/stats', authMiddleware.autenticateToken, shopController.getStatistiche);
 
 
 /**
@@ -205,9 +257,11 @@ router.get('/:id', shopController.getShopById);
  * /api/shops/promotion:
  *   post:
  *     summary: Add a promotion
- *     description: Add a promotion to an existing shopS.
+ *     description: Add a promotion to an existing shop.
  *     tags:
  *       - Shops
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -222,20 +276,17 @@ router.get('/:id', shopController.getShopById);
  *             properties:
  *               description:
  *                 type: string
- *                 description: A brief description of the promotion
  *                 example: "Formaggio buono scontato"
  *               value:
  *                 type: string
- *                 description: Value of the promotion
  *                 example: "Due al prezzo di uno - 20%"
  *     responses:
  *       200:
  *         description: Promotion added to the shop
-
  *       400:
  *         description: Date error
  *       500:
- *         description: Internal server error.
+ *         description: Internal server error
  */
 router.post('/promotion', authMiddleware.autenticateToken, shopController.addPromotion);
 
@@ -247,7 +298,7 @@ router.post('/promotion', authMiddleware.autenticateToken, shopController.addPro
  *     summary: Delete a promotion
  *     description: Removes a promotion for the authenticated vendor based on its description.
  *     tags:
- *       - Promotions
+ *       - Shops
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -304,12 +355,12 @@ router.delete('/promotion', authMiddleware.autenticateToken, shopController.dele
 
 /**
  * @openapi
- * /api/event:
+ * /api/shops/event:
  *   post:
  *     summary: Add a new event
  *     description: Creates a new event for the authenticated user's shop
  *     tags:
- *       - Events
+ *       - Shops
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -358,12 +409,12 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
 
 /**
  * @openapi
- * /api/event/delete:
+ * /api/shops/event/delete:
  *   delete:
  *     summary: Delete an event
  *     description: Deletes an event from the authenticated user's shop using the event name
  *     tags:
- *       - Events
+ *       - Shops
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -409,7 +460,7 @@ router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEv
  *     summary: Add feedback to a shop
  *     description: Allows an authenticated user to leave a feedback on a shop
  *     tags:
- *       - Feedback
+ *       - Shops
  *     security:
  *       - bearerAuth: []
  *     parameters:

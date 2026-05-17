@@ -1,58 +1,99 @@
+// app/_layout.tsx
+import { AuthProvider, useAuth} from '../context/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
-// Hardcoded test user
-const TEST_USER = {
-  isLoggedIn: false, 
-  role: 'customer'  
-};
+function DebugLogoutButton() {
+  const { logout } = useAuth();
 
-export default function RootLayout() {
+
+  return (
+    <View style={styles.debugContainer}>
+      <TouchableOpacity style={styles.debugButton} onPress={logout}>
+        <Text style={styles.debugText}>⚠ DEV Logout</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function RootNavigator() {
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+  const { isLoggedIn, isLoading, role } = useAuth();
 
-  // Questo useEffect serve a capire quando il Root Layout è montato
   useEffect(() => {
     setIsReady(true);
   }, []);
 
   useEffect(() => {
-    // Se il router non è pronto o i segmenti non sono ancora caricati, non fare nulla
-    if (!isReady || !segments) return;
+    if (!isReady || !segments || isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup     = segments[0] === '(auth)';
     const inCustomerGroup = segments[0] === '(customer)';
-    const inVendorGroup = segments[0] === '(vendor)';
+    const inVendorGroup   = segments[0] === '(vendor)';
 
-    // --- LOGICA REINDIRIZZAMENTO ---
-
-    // 1. Caso: Utente NON loggato (GUEST)
-    // Se non è loggato e NON si trova già nell'area customer o auth, mandalo a customer
-    if (!TEST_USER.isLoggedIn && !inCustomerGroup && !inAuthGroup) {
+    // 1. Guest → browse as customer
+    if (!isLoggedIn && !inCustomerGroup && !inAuthGroup) {
       router.replace('/(customer)/(tabs)');
-    } 
-    
-    // 2. Caso: Utente VENDOR loggato
-    // Se è un vendor e non si trova nell'area vendor, mandalo lì
-    if (TEST_USER.isLoggedIn && TEST_USER.role === 'vendor' && !inVendorGroup) {
+      return;
+    }
+
+    if (!isLoggedIn) return;
+
+    // 2. Vendor → vendor area
+    if (role === 'vendor' && !inVendorGroup) {
       router.replace('/(vendor)/(tabs)');
+      return;
     }
 
-    // 3. Caso: Utente CUSTOMER loggato
-    // Se è un customer loggato e sta provando a entrare in auth, rimandalo alla home
-    if (TEST_USER.isLoggedIn && TEST_USER.role === 'customer' && inAuthGroup) {
+    // 3. Customer or Pending → customer area, block auth pages
+    if ((role === 'customer' || role === 'pending') && inAuthGroup) {
       router.replace('/(customer)/(tabs)');
+      return;
     }
 
-  }, [isReady, segments]); // Dipende dal montaggio e dal cambio di pagina
+  }, [isReady, segments, isLoggedIn, isLoading, role]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Definizione dei gruppi */}
-      <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(customer)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)"     options={{ headerShown: false }} />
+        <Stack.Screen name="(vendor)"   options={{ headerShown: false }} />
+      </Stack>
+
+      <DebugLogoutButton />
+    </>
   );
 }
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  debugContainer: {
+    position: 'absolute',
+    bottom: 60,
+    right: 16,
+    zIndex: 9999,
+  },
+  debugButton: {
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    opacity: 0.85,
+  },
+  debugText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+});
