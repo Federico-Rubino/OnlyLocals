@@ -6,12 +6,14 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 /**
  * @openapi
- * /api/users/register:
+ * /api/shops/register:
  *   post:
- *     summary: Register a new user
- *     description: Creates a new general user account
+ *     summary: Register a new shop
+ *     description: Creates a shop with itinerary, events, promotions, and automatically computes geolocation data from itinerary slots.
  *     tags:
- *       - Authentication
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -19,38 +21,98 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *           schema:
  *             type: object
  *             required:
- *               - email
- *               - password
+ *               - name
+ *               - category
  *             properties:
- *               email:
+ *               name:
  *                 type: string
- *                 example: "test@example.com"
- *               password:
+ *                 example: "La Bottega Italiana"
+ *               description:
  *                 type: string
- *                 example: strongPassword123
+ *                 example: "Shop specializing in Italian food products"
+ *               category:
+ *                 type: string
+ *                 example: "food"
+ *               fidelityCardManager:
+ *                 type: string
+ *                 description: ID of fidelity card manager (if applicable)
+ *                 example: "64f1c2a8b9d1e2f3a4b5c6d7"
+ *               itinerario:
+ *                 type: object
+ *                 description: Weekly schedule with time slots and optional geolocation
+ *                 additionalProperties:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       latitudine:
+ *                         type: number
+ *                         example: 45.4642
+ *                       longitudine:
+ *                         type: number
+ *                         example: 9.1900
+ *                       location:
+ *                         type: object
+ *                         description: Auto-generated from latitudine/longitudine
+ *               events:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 example: []
+ *               promotions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                 example: []
  *     responses:
  *       201:
- *         description: User successfully registered
+ *         description: Shop registered successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Shop registered successfully
+ *                 newRole:
+ *                   type: string
+ *                   example: owner
  *                 id:
  *                   type: string
- *                 email:
- *                   type: string
+ *                   example: 64f1c2a8b9d1e2f3a4b5c6d7
  *       400:
- *         description: Invalid input data
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Shop registration failed
+ *                 error:
+ *                   type: string
+ *                   example: Name is required
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
  */
 router.post('/register', errorMiddleware.validateRegisterData, userController.register);
 
 /**
  * @openapi
- * /api/users/login:
+ * /api/auth/login:
  *   post:
- *     summary: Log in a user
- *     description: Authenticates a user using either their email or username and returns a JWT token for accessing protected routes.
+ *     summary: User login
+ *     description: Authenticates a user using email/username and password, returning access and refresh tokens.
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -65,15 +127,15 @@ router.post('/register', errorMiddleware.validateRegisterData, userController.re
  *             properties:
  *               identifier:
  *                 type: string
- *                 description: The user's registered email or username.
- *                 example: "mariorossi92"
+ *                 description: Email or username used to identify the user
+ *                 example: "user@example.com"
  *               password:
  *                 type: string
- *                 description: The user's plain text password.
- *                 example: "MySuperSecretPassword123!"
+ *                 format: password
+ *                 example: "StrongPassword123!"
  *     responses:
- *       200:
- *         description: Login successful. Returns the JWT authentication token.
+ *       201:
+ *         description: Login successful
  *         content:
  *           application/json:
  *             schema:
@@ -81,17 +143,43 @@ router.post('/register', errorMiddleware.validateRegisterData, userController.re
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Login successful"
- *                 token:
+ *                   example: Login ok
+ *                 accessToken:
  *                   type: string
- *                   description: Bearer token to be used in the Authorization header.
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   description: JWT access token
+ *                 refreshToken:
+ *                   type: string
+ *                   description: JWT refresh token
  *       400:
- *         description: Bad request. Missing identifier or password.
+ *         description: Missing credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bad request. Missing identifier or password.
  *       401:
- *         description: Unauthorized. Invalid credentials provided.
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid credentials
  *       500:
- *         description: Internal server error.
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
  */
 router.post('/login', userController.login);
 
@@ -99,13 +187,12 @@ router.post('/login', userController.login);
  * @openapi
  * /api/auth/refresh:
  *   post:
+ *     summary: Refresh access token
+ *     description: Generates a new access token and refresh token using a valid refresh token.
  *     tags:
  *       - Authentication
- *     summary: Refresh Tokens
- *     description: Exchanges an old refresh token for a new access token and a new refresh token (implementing refresh token rotation).
  *     requestBody:
  *       required: true
- *       description: The current, valid refresh token.
  *       content:
  *         application/json:
  *           schema:
@@ -115,11 +202,11 @@ router.post('/login', userController.login);
  *             properties:
  *               oldRefreshToken:
  *                 type: string
- *                 description: The JWT refresh token currently stored on the client's device.
- *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOi..."
+ *                 description: Existing refresh token
+ *                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *     responses:
  *       201:
- *         description: Successfully generated new tokens.
+ *         description: Tokens refreshed successfully
  *         content:
  *           application/json:
  *             schema:
@@ -127,17 +214,15 @@ router.post('/login', userController.login);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Refresh ok"
+ *                   example: Refresh ok
  *                 accessToken:
  *                   type: string
- *                   description: The new short-lived access token.
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuZXdBY2Nlc3Mi..."
+ *                   description: New JWT access token
  *                 refreshToken:
  *                   type: string
- *                   description: The new long-lived refresh token.
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuZXdSZWZyZXNo..."
+ *                   description: New refresh token
  *       401:
- *         description: Unauthorized. The token is missing, invalid, or has been revoked.
+ *         description: Missing or invalid refresh token
  *         content:
  *           application/json:
  *             schema:
@@ -145,9 +230,9 @@ router.post('/login', userController.login);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "refresh token absent"
+ *                   example: refresh token absent
  *       500:
- *         description: Internal Server Error. An unexpected error occurred.
+ *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
@@ -155,7 +240,7 @@ router.post('/login', userController.login);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Internal server error details"
+ *                   example: Refresh Token not valid or revoked
  */
 router.post('/refreshToken', userController.refreshToken);
 
@@ -214,6 +299,286 @@ router.post('/refreshToken', userController.refreshToken);
  *                   example: "Internal server error during logout"
  */
 
+router.post('/logout', userController.logout);
+
+
+/**
+ * @openapi
+ * /api/users/favorites:
+ *   post:
+ *     summary: Add a shop to favorites
+ *     description: Adds a shop to the authenticated user's favorites list.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopId
+ *             properties:
+ *               shopId:
+ *                 type: string
+ *                 description: ID of the shop to add to favorites
+ *                 example: "64f1c2a8b9d1e2f3a4b5c6d7"
+ *     responses:
+ *       200:
+ *         description: Shop successfully added to favorites
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Shop added to favorites
+ *                 results:
+ *                   type: object
+ *                   description: Updated favorites list or user object
+ *       400:
+ *         description: Missing shopId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: shopId needed.
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.post('/favorites', authMiddleware.autenticateToken, userController.addShopToFavorites);
+
+/**
+ * @openapi
+ * /api/users/favorites:
+ *   delete:
+ *     summary: Remove a shop from favorites
+ *     description: Removes a shop from the authenticated user's favorites list.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - shopId
+ *             properties:
+ *               shopId:
+ *                 type: string
+ *                 description: ID of the shop to remove from favorites
+ *                 example: "64f1c2a8b9d1e2f3a4b5c6d7"
+ *     responses:
+ *       200:
+ *         description: Shop successfully removed from favorites
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Shop removed from favorites
+ *                 results:
+ *                   type: object
+ *                   description: Updated favorites list or user object
+ *       400:
+ *         description: Bad request (missing shopId or shop not in favorites)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: shopId needed
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.delete('/favorites', authMiddleware.autenticateToken, userController.removeShopFromFavorites);
+
+/**
+ * @openapi
+ * /api/users/setAsCustomer:
+ *   patch:
+ *     summary: Set user as customer
+ *     description: Updates the authenticated user's status to customer.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User successfully set as customer
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User set as customer
+ *                 results:
+ *                   type: object
+ *                   description: Updated user object
+ *       400:
+ *         description: Invalid state (user not pending)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: User is not pending
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
+router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
+
+/**
+ * @openapi
+ * /api/users/profile:
+ *   patch:
+ *     summary: Update user personal data
+ *     description: Updates the authenticated user's personal profile information.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Fields to update (all fields are optional, but at least one is required)
+ *             additionalProperties: true
+ *             example:
+ *               username: "newUsername"
+ *               email: "newemail@example.com"
+ *               firstName: "Mario"
+ *               lastName: "Rossi"
+ *               phone: "+39 333 1234567"
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile updated successfully
+ *                 results:
+ *                   type: object
+ *                   description: Updated user object
+ *       400:
+ *         description: No data provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: No data provided.
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *       409:
+ *         description: Conflict (email or username already in use)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Email already in use
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
 
 /**
  * @openapi
@@ -253,16 +618,6 @@ router.post('/refreshToken', userController.refreshToken);
  *       500:
  *         description: Internal server error
  */
-router.post('/logout', userController.logout);
-
-router.post('/favorites', authMiddleware.autenticateToken, userController.addShopToFavorites);
-
-router.delete('/favorites', authMiddleware.autenticateToken, userController.removeShopFromFavorites);
-
-router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
-
-router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
-
 router.get('/me', authMiddleware.autenticateToken, userController.getUserData);
 
 module.exports = router;
