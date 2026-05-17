@@ -185,7 +185,7 @@ router.post('/login', userController.login);
 
 /**
  * @openapi
- * /api/auth/refresh:
+ * /api/auth/refreshToken:
  *   post:
  *     summary: Refresh access token
  *     description: Generates a new access token and refresh token using a valid refresh token.
@@ -516,7 +516,7 @@ router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.s
  *               email: "newemail@example.com"
  *               firstName: "Mario"
  *               lastName: "Rossi"
- *               phone: "+39 333 1234567"
+ *               bornDate: "19990501"
  *     responses:
  *       200:
  *         description: Profile updated successfully
