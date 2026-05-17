@@ -73,3 +73,17 @@ La repository contiene due sezioni principali `backend` e `frontend`. Nella sezi
 ├── LICENSE
 └── README.md
 ```
+
+# Utilizzo
+## Backend
+Entrare in `./backend`:
+- installare i pacchetti necessari con `npm install`
+- avviare il server in locale con `npm run start`
+- il server può anche essere avviato in modalità development (con log dettagliati in caso di errori) con `npm run dev`
+- con `npm run lint` viene avviato il tool di analisi statica del codice eslint
+
+## Frontend
+Entrare in `./frontend/onlylocals-app`:
+- installare i pacchetti necessari con `npm install`
+- per avviare il server di development usare `npx expo start`
+- per utilizzare un dispositivo mobile fisico è necessario compilare con expo i file sorgenti contenenti anche la chiave di licenza mapbox
