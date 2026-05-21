@@ -328,3 +328,19 @@ exports.redeemVantaggio = async (vendorId, barcode, descrizioneVantaggio) => {
         utente:         user.name
     };
 };
+
+exports.modifyConversion = async (vendorId, tassoConversione) => {
+    const shop = await getShopFromVendor(vendorId);
+
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
+    if (tassoConversione <= 0) throw new Error("Tasso di conversione deve essere maggiore di 0");
+
+
+    const updated = await Shop.findByIdAndUpdate(
+        shop._id,
+        { $set: { "fidelityCardManager.tassoConversione": tassoConversione } },
+        { new: true }
+    );
+
+    return { tassoConversione: shop.fidelityCardManager.tassoConversione };
+};

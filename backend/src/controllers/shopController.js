@@ -342,3 +342,34 @@ exports.redeemVantaggio = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }
 };
+
+exports.modifyConversion = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { tasso } = req.body;
+
+        if (!tasso) {
+            return res.status(400).json({
+                success: false,
+                message: "Tasso di conversione obbligatorio"
+            });
+        }
+
+        const result = await shopService.modifyConversion(vendorId, tasso);
+
+        res.status(200).json({
+            success: true,
+            message: "Tasso di conversione aggiornato",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        if (err.message === "Tasso di conversione deve essere maggiore di 0") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};

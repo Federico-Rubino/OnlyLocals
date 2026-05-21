@@ -105,50 +105,7 @@ router.post('/register', authMiddleware.autenticateToken, shopController.registe
  */
 router.get('/search', shopController.searchShops);
 
-/**
- * @openapi
- * /api/shops/{id}:
- *   get:
- *     summary: Get a single shop by ID
- *     description: Returns all info of a specific commercial activity
- *     tags:
- *       - Shops
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Shop ID
- *     responses:
- *       200:
- *         description: Shop details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     itinerario:
- *                       type: object
- *                     events:
- *                       type: array
- *                     promotions:
- *                       type: array                 
- *       404:
- *         description: Shop not found
- *       500:
- *         description: Server error
- */
-router.get('/:id', shopController.getShopById);
+
 
 /**
  * @openapi
@@ -504,6 +461,83 @@ router.post('/fidelity/scan/addPoints', authMiddleware.autenticateToken, shopCon
  *         description: Fidelity card not found
  */
 router.post('/fidelity/scan/redeem', authMiddleware.autenticateToken, shopController.redeemVantaggio);
+
+
+/**
+ * @openapi
+ * /api/shops/fidelity/modifyConversion:
+ *   put:
+ *     summary: Modify conversion rate
+ *     description: Set how many euros correspond to 1 point
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tasso
+ *             properties:
+ *               tasso:
+ *                 type: number
+ *                 example: 10
+ *                 description: "Euros needed for 1 point (es. 10 = 10€ = 1 punto)"
+ *     responses:
+ *       200:
+ *         description: Tasso aggiornato
+ *       403:
+ *         description: Not a vendor
+ */
+router.put('/fidelity/modifyConversion', authMiddleware.autenticateToken, shopController.modifyConversion);
+
+/**
+ * @openapi
+ * /api/shops/{id}:
+ *   get:
+ *     summary: Get a single shop by ID
+ *     description: Returns all info of a specific commercial activity
+ *     tags:
+ *       - Shops
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Shop ID
+ *     responses:
+ *       200:
+ *         description: Shop details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     itinerario:
+ *                       type: object
+ *                     events:
+ *                       type: array
+ *                     promotions:
+ *                       type: array                 
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id', shopController.getShopById);
 
 
 module.exports = router;
