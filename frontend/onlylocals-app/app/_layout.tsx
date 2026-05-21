@@ -1,6 +1,5 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { createContext, useEffect, useState } from 'react';
-import '../services/i18n';
 
 // Hardcoded test user
 const TEST_USER = {

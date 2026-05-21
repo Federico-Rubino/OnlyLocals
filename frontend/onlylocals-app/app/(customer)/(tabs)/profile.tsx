@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { t } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
   Text, TextInput, TouchableOpacity, View
@@ -11,13 +9,11 @@ import { UserProfile, userService } from '../../../services/userService';
 
 
  const SETTINGS = [
-    { id: 1, label: t('settings'),     icon: 'settings-outline', route: '/settings/settings' },
-    { id: 2, label: t('appearance'),   icon: 'moon-outline',     route: '/settings/appearance' },
-    { id: 3, label: t('language'),     icon: 'globe-outline',    route: '/settings/language' },
-  ];
+    { id: 1, label: 'settings',     icon: 'settings-outline', route: '/settings/settings' },
+    { id: 2, label: 'appearance',   icon: 'moon-outline',     route: '/settings/appearance' },  ];
 
 export default function ProfileScreen() {
-  const { t } = useTranslation(); 
+ 
   
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
