@@ -25,4 +25,13 @@ export const userService = {
   updateProfile: async (data: Partial<UserProfile>): Promise<void> => {
     await apiClient.patch('/users/profile', data);
   },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await apiClient.patch('/users/change-password', { currentPassword, newPassword });
+  },
+
+  getMyData: async (): Promise<UserProfile> => {
+    const response = await apiClient.get('/users/me');
+    return response.data.data;
+  },
 };

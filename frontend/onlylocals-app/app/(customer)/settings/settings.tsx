@@ -1,25 +1,101 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import * as Location from 'expo-location';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  Alert, Linking, ScrollView, Share, StyleSheet,
+  Switch, Text, TouchableOpacity, View
+} from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
+import { userService } from '../../../services/userService';
+import { locationPreference } from '../../../utils/locationPreference';
 
-const ACCOUNT_ITEMS = [
-  { label: 'Cambia password',       icon: 'lock-closed-outline', color: '#255cb3' },
-  { label: 'Scarica i miei dati',   icon: 'download-outline',    color: '#255cb3' },
-  { label: 'Elimina account',       icon: 'trash-outline',       color: '#e53935' }, // Nuova voce
-];
-
-const SUPPORT_ITEMS = [
-  { label: 'Informazioni sull\'app', icon: 'information-circle-outline' },
-];
 
 export default function SettingsScreen() {
-  const [location, setLocation] = useState(false);
+  const { logout } = useAuth();
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      const pref = await locationPreference.get();
+      setLocationEnabled(status === 'granted' && pref);
+    })();
+  }, []);
+
+  const handleLocationToggle = async (value: boolean) => {
+    if (value) {
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        await locationPreference.set(true);
+        setLocationEnabled(true);
+      } else if (!canAskAgain) {
+        Alert.alert(
+          'Permesso negato',
+          'Per abilitare la posizione vai nelle impostazioni del dispositivo.',
+          [
+            { text: 'Annulla', style: 'cancel' },
+            { text: 'Apri impostazioni', onPress: () => Linking.openSettings() },
+          ],
+        );
+      }
+    } else {
+      await locationPreference.set(false);
+      setLocationEnabled(false);
+    }
+  };
+
+  const handleDownloadData = async () => {
+    try {
+      const data = await userService.getMyData();
+      const text = [
+        'I MIEI DATI - OnlyLocals',
+        '------------------------',
+        `Nome: ${data.name}`,
+        `Cognome: ${data.surname}`,
+        `Email: ${data.email}`,
+        `Data di nascita: ${new Date(data.bornDate).toLocaleDateString('it-IT')}`,
+        `Ruolo: ${data.role}`,
+      ].join('\n');
+      await Share.share({ message: text, title: 'I miei dati OnlyLocals' });
+    } catch {
+      Alert.alert('Errore', 'Impossibile recuperare i tuoi dati.');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Elimina account',
+      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Elimina',
+          style: 'destructive',
+          onPress: () => Alert.alert('Funzionalità', 'Contatta il supporto per eliminare il tuo account.'),
+        },
+      ],
+    );
+  };
+
+  const handleLogout = async () => {
+    Alert.alert('Esci', "Vuoi davvero uscire dall'account?", [
+      { text: 'Annulla', style: 'cancel' },
+      {
+        text: 'Esci',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
+  };
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.pageTitle}>Impostazioni</Text>
 
-      {/* Toggle section */}
       <Text style={styles.sectionTitle}>Preferenze rapide</Text>
       <View style={styles.card}>
         <View style={styles.row}>
@@ -28,52 +104,40 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Posizione</Text>
           </View>
           <Switch
-            value={location}
-            onValueChange={setLocation}
+            value={locationEnabled}
+            onValueChange={handleLocationToggle}
             trackColor={{ true: '#255cb3' }}
             thumbColor="#fff"
           />
         </View>
       </View>
 
-      {/* Account section */}
       <Text style={styles.sectionTitle}>Account</Text>
       <View style={styles.card}>
-        {ACCOUNT_ITEMS.map((item, idx) => (
-          <TouchableOpacity
-            key={item.label}
-            style={[styles.row, idx > 0 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}
-          >
-            <View style={styles.rowLeft}>
-              <Ionicons name={item.icon as any} size={20} color={item.color} style={styles.rowIcon} />
-              <Text style={[styles.rowLabel, item.label === 'Elimina account' && { color: '#e53935' }]}>
-                {item.label}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#aaa" />
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleDownloadData}
+        >
+          <View style={styles.rowLeft}>
+            <Ionicons name="download-outline" size={20} color="#255cb3" style={styles.rowIcon} />
+            <Text style={styles.rowLabel}>Scarica i miei dati</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#aaa" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.row, { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}
+          onPress={handleDeleteAccount}
+        >
+          <View style={styles.rowLeft}>
+            <Ionicons name="trash-outline" size={20} color="#e53935" style={styles.rowIcon} />
+            <Text style={[styles.rowLabel, { color: '#e53935' }]}>Elimina account</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#aaa" />
+        </TouchableOpacity>
       </View>
 
-      {/* Support section */}
-      <Text style={styles.sectionTitle}>Supporto</Text>
-      <View style={styles.card}>
-        {SUPPORT_ITEMS.map((item, idx) => (
-          <TouchableOpacity
-            key={item.label}
-            style={[styles.row, idx > 0 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}
-          >
-            <View style={styles.rowLeft}>
-              <Ionicons name={item.icon as any} size={20} color="#255cb3" style={styles.rowIcon} />
-              <Text style={styles.rowLabel}>{item.label}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#aaa" />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Logout */}
-      <TouchableOpacity style={styles.logoutBtn}>
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color="#e53935" />
         <Text style={styles.logoutText}>Esci dall'account</Text>
       </TouchableOpacity>

@@ -8,6 +8,7 @@ import FilterBar from '../../../components/FilterBar';
 import ShopResultsList from '../../../components/ShopResultsList';
 import { SearchResult } from '../../../services/searchService';
 import { getCurrentDayKey, getCurrentSlotKey } from '../../../utils/getCurrentSlot';
+import { locationPreference } from '../../../utils/locationPreference';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
@@ -48,13 +49,19 @@ const HomeScreen = () => {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [userCoordinate, setUserCoordinate] = useState<[number, number] | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [locationVisible, setLocationVisible] = useState(false);
 
   const router = useRouter();
   // Request location permission and fly to user position on mount
   useEffect(() => {
     (async () => {
+      const prefEnabled = await locationPreference.get();
+      if (!prefEnabled) return;
+
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
+
+      setLocationVisible(true);
 
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
@@ -141,7 +148,7 @@ const HomeScreen = () => {
 
           {/* Blue pulsing dot for the user's current position */}
           <Mapbox.UserLocation
-            visible={true}
+            visible={locationVisible}
             animated={true}
           />
 
