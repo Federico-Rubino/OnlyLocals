@@ -1,13 +1,18 @@
 // app/_layout.tsx
 import { AuthProvider, useAuth} from '../context/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
 const TEST_USER = {
   isLoggedIn: true, 
   role: 'vendor'  
 };
+
+export const ThemeContext = createContext({
+  theme: 'light' as 'light' | 'dark',
+  setTheme: (t: 'light' | 'dark') => {},
+});
 
 function DebugLogoutButton() {
   const { logout } = useAuth();
@@ -26,6 +31,8 @@ function RootNavigator() {
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const { isLoggedIn, isLoading, role } = useAuth();
 
   useEffect(() => {
@@ -62,15 +69,18 @@ function RootNavigator() {
   }, [isReady, segments, isLoggedIn, isLoading, role]);
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Stack 
+        screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: theme === 'dark' ? '#121212' : '#f5f7fa' } 
+        }}
+      >
         <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)"     options={{ headerShown: false }} />
-        <Stack.Screen name="(vendor)"   options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
       </Stack>
-
-      <DebugLogoutButton />
-    </>
+    </ThemeContext.Provider>
   );
 }
 

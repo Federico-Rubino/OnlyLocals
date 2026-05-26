@@ -9,3 +9,12 @@ export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
 }
+
+
+export type User = {
+  _id: string;
+  name: string;
+  surname: string;
+  email: string;
+  bornDate: string;
+};
