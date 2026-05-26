@@ -4,6 +4,11 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 
+const TEST_USER = {
+  isLoggedIn: true, 
+  role: 'vendor'  
+};
+
 function DebugLogoutButton() {
   const { logout } = useAuth();
 
