@@ -7,13 +7,12 @@ interface ShopApiResponse {
   message?: string;
 }
 
-export const shopService = {
-  getShopById: async (id: string): Promise<Shop> => {
-    const response = await apiClient.get<ShopApiResponse>(`/shops/${id}`);
-
-    return response.data.data; 
-  }
+export const getShopById = async (id: string): Promise<Shop> => {
+  const response = await apiClient.get<ShopApiResponse>(`/shops/${id}`);
+  return response.data.data;
 };
+
+export const shopService = { getShopById };
 
 export const addPromozione = async (data: {
   description: string;
@@ -47,9 +46,3 @@ export const updateShop = async (data: {
   await apiClient.put('/shops/update', data);
 };
 
-export const getShopById = async (id: string): Promise<Shop> => {
-  // Definiamo la struttura attesa direttamente qui, senza creare un tipo a parte
-  const response = await apiClient.get<{ success: boolean; data: Shop }>(`/shops/${id}`);
-  
-  return response.data.data; 
-};

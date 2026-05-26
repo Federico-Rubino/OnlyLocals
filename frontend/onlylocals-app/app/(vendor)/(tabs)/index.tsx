@@ -54,8 +54,12 @@ export default function VetrinaScreen() {
 
      useEffect(() => {
     const loadShop = async () => {
+      if (!shopId) {
+        Alert.alert('Errore', 'Nessun negozio associato a questo account.');
+        setLoadingData(false);
+        return;
+      }
       try {
-        // prendi shopId dal context auth
         const shop = await getShopById(shopId);
 
         setShopName(shop.name);
@@ -171,7 +175,6 @@ export default function VetrinaScreen() {
   };
 
   const eliminaEvento = async () => {
-    console.log('Elimino evento:', eventoToDelete);
     if (!eventoToDelete.trim()) {
       Alert.alert('Attenzione', 'Seleziona un evento da eliminare.');
       return;

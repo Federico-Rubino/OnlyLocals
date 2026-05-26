@@ -25,7 +25,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 3.response interceptor to distinguish publig api from one with login
+// response interceptor to distinguish public api from one with login
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
 
       } catch (refreshError) {
         //If refresh token not working delete all token
-        console.error("Refresh token ");
+        console.error("Refresh token expired, clearing session.");
         await tokenService.clearTokens();
         //add event to relogin the user
         return Promise.reject(refreshError);
