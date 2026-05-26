@@ -31,8 +31,7 @@ const swaggerOptions = {
 };
 
 const swaggerDocument = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-console.log(swaggerOptions.apis);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
 

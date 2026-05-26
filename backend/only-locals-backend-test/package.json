@@ -1,0 +1,21 @@
+{
+  "name": "only-locals-backend-test",
+  "version": "1.0.0",
+  "description": "Jest test suite for the OnlyLocals backend API",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "supertest": "^7.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/*.test.js"]
+  }
+}
