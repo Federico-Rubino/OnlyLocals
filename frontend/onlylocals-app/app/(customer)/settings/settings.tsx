@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
 
 const ACCOUNT_ITEMS = [
   { label: 'Cambia password',       icon: 'lock-closed-outline', color: '#255cb3' },
@@ -13,7 +14,30 @@ const SUPPORT_ITEMS = [
 ];
 
 export default function SettingsScreen() {
+  const { deleteAccount, logout } = useAuth();
   const [location, setLocation] = useState(false);
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Elimina account',
+      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Elimina',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+            } catch (err: any) {
+              console.log('deleteAccount error:', JSON.stringify(err?.response?.data), err?.response?.status, err?.message);
+              Alert.alert('Errore', "Impossibile eliminare l'account. Riprova più tardi.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -43,6 +67,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             key={item.label}
             style={[styles.row, idx > 0 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}
+            onPress={item.label === 'Elimina account' ? handleDeleteAccount : undefined}
           >
             <View style={styles.rowLeft}>
               <Ionicons name={item.icon as any} size={20} color={item.color} style={styles.rowIcon} />
@@ -73,7 +98,7 @@ export default function SettingsScreen() {
       </View>
 
       {/* Logout */}
-      <TouchableOpacity style={styles.logoutBtn}>
+      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
         <Ionicons name="log-out-outline" size={20} color="#e53935" />
         <Text style={styles.logoutText}>Esci dall'account</Text>
       </TouchableOpacity>

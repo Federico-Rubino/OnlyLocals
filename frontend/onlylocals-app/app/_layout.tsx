@@ -77,16 +77,17 @@ function RootNavigator() {
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
-      <Stack 
-        screenOptions={{ 
+      <Stack
+        screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme === 'dark' ? '#121212' : '#f5f7fa' } 
+          contentStyle: { backgroundColor: theme === 'dark' ? '#121212' : '#f5f7fa' }
         }}
       >
         <Stack.Screen name="(customer)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
       </Stack>
+      <DebugLogoutButton />
     </ThemeContext.Provider>
   );
 }

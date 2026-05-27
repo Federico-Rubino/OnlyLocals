@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
+import { userService } from '../services/userService';
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -11,6 +12,7 @@ type AuthContextType = {
   login: (credentials: { identifier: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateRole: (newRole: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,8 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(newRole);
   };
 
+  const deleteAccount = async () => {
+    await userService.deleteAccount();
+    await tokenService.clearTokens();
+    setIsLoggedIn(false);
+    setRole(null);
+    setShopId(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
