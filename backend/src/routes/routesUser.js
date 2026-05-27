@@ -620,4 +620,37 @@ router.patch('/profile', authMiddleware.autenticateToken, userController.updateP
  */
 router.get('/me', authMiddleware.autenticateToken, userController.getUserData);
 
+/**
+ * @openapi
+ * /api/users/me:
+ *   delete:
+ *     summary: Delete account
+ *     description: Permanently deletes the authenticated user's account. If the user is a vendor, their shop is also deleted and removed from all users' saved shops.
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Account deleted successfully
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/me', authMiddleware.autenticateToken, userController.deleteAccount);
+
 module.exports = router;

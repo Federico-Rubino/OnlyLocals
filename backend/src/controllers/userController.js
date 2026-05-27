@@ -203,3 +203,18 @@ exports.getUserData = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+exports.deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        await userService.deleteAccount(userId);
+
+        res.status(200).json({ success: true, message: "Account deleted successfully" });
+    } catch (err) {
+        if (err.message === "User not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

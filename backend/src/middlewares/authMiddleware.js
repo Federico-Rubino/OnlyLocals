@@ -21,7 +21,7 @@ exports.autenticateToken = (req, res, next) => {
 
         const user = await User.findById(decodeData.userId);
 
-        const allowedRoutesForPending = ['/api/shops/register', '/api/users/setAsCustomer'];
+        const allowedRoutesForPending = ['/api/shops/register', '/api/users/setAsCustomer', '/api/users/me'];
 
         if (user.role === 'pending' && !allowedRoutesForPending.includes(req.originalUrl)) {
             return res.status(403).json({

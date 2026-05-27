@@ -223,3 +223,37 @@ exports.getUserData = async (userId) =>{
   return user;
 };
 
+exports.deleteAccount = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  if (user.role === 'vendor' && user.vendorShop) {
+    const shopId = user.vendorShop;
+    await Shop.deleteOne({ _id: shopId });
+    await User.updateMany(
+      { savedShops: shopId },
+      { $pull: { savedShops: shopId } }
+    );
+  }
+
+  const shopsWithFeedback = await Shop.find({ 'statistiche.storicoFeedback.user': userId });
+  for (const shop of shopsWithFeedback) {
+    shop.statistiche.storicoFeedback = shop.statistiche.storicoFeedback.filter(
+      f => f.user.toString() !== userId.toString()
+    );
+    const total = shop.statistiche.storicoFeedback.length;
+    shop.statistiche.totaleFeedback = total;
+    if (total > 0) {
+      const somma = shop.statistiche.storicoFeedback.reduce((acc, f) => acc + f.voto, 0);
+      shop.statistiche.votoMedio = (somma / total).toFixed(1);
+    } else {
+      shop.statistiche.votoMedio = 0;
+    }
+    shop.statistiche.ultimoAggiornamento = new Date();
+    shop.markModified('statistiche');
+    await shop.save();
+  }
+
+  await User.deleteOne({ _id: userId });
+};
+
