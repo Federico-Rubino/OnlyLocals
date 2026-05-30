@@ -154,6 +154,51 @@ exports.setAsCustomer = async (req, res) => {
   }
 }
 
+exports.savePushToken = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { pushToken } = req.body;
+    if (!pushToken) {
+      return res.status(400).json({ success: false, message: 'pushToken required' });
+    }
+    await userService.savePushToken(userId, pushToken);
+    res.status(200).json({ success: true, message: 'Push token saved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notifications = await userService.getNotifications(userId);
+    res.status(200).json({ success: true, data: notifications });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.markNotificationRead = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { notificationId } = req.params;
+    await userService.markNotificationRead(userId, notificationId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getFavorites = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await userService.getFavoritesWithDetails(userId);
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 exports.updatePersonalData = async (req, res) => {
   try {
       const userId = req.user.userId;

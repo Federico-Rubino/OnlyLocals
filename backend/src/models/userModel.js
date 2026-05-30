@@ -1,6 +1,16 @@
 const mongoose = require('mongoose');
 const FidelityCardSchema = require('./fidelityCardModel.js');
 
+const NotificationSchema = new mongoose.Schema({
+  shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop' },
+  shopName: String,
+  eventName: String,
+  eventDescription: String,
+  eventDate: Date,
+  sentAt: { type: Date, default: Date.now },
+  read: { type: Boolean, default: false }
+});
+
 const userSchema = new mongoose.Schema({
 
   name: {
@@ -51,11 +61,15 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
-  // VENDOR DATA 
+  // VENDOR DATA
   vendorShop: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Shop'
-  }
+  },
+
+  pushToken: { type: String, default: null },
+
+  notifications: [NotificationSchema]
 
 });
 

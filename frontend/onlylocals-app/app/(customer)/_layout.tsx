@@ -22,6 +22,7 @@ export default function CustomerLayout() {
       <Stack.Screen name="settings/language"      options={{ title: 'Lingua',         headerBackTitle: 'Indietro' }} />
       <Stack.Screen name="settings/security"      options={{ title: 'Sicurezza',      headerBackTitle: 'Indietro' }} />
       <Stack.Screen name="settings/notifications" options={{ title: 'Notifiche',      headerBackTitle: 'Indietro' }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
 
     </Stack>
   );
