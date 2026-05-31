@@ -65,6 +65,11 @@ export default function VendorNotificationsScreen() {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  useEffect(() => {
+    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
   const handlePress = async (item: AppNotification) => {
     if (!item.read) {
       await markNotificationRead(item._id).catch(() => {});
