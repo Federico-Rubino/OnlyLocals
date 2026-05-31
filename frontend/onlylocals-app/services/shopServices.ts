@@ -46,3 +46,24 @@ export const updateShop = async (data: {
   await apiClient.put('/shops/update', data);
 };
 
+export interface ItinerarioSlotPayload {
+  latitudine: number;
+  longitudine: number;
+  indirizzo?: string;
+}
+
+export type ItinerarioPayload = Record<
+  string,
+  Record<string, ItinerarioSlotPayload>
+>;
+
+export const registerShop = async (data: {
+  name: string;
+  description: string;
+  category: string[];
+  itinerario?: ItinerarioPayload;
+}): Promise<{ newRole: string; id: string }> => {
+  const response = await apiClient.post('/shops/register', data);
+  return response.data;
+};
+
