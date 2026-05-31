@@ -147,6 +147,21 @@ exports.searchShops = async (filters) => {
 exports.addEvent = async (vendorId, eventData) => {
     const shop = await getShopFromVendor(vendorId);
 
+    const incomingDate = new Date(eventData.date);
+    incomingDate.setHours(0, 0, 0, 0);
+
+    const duplicate = shop.events.some(e => {
+        const existingDate = new Date(e.date);
+        existingDate.setHours(0, 0, 0, 0);
+        return e.description === eventData.description && existingDate.getTime() === incomingDate.getTime();
+    });
+
+    if (duplicate) {
+        const err = new Error('An event with the same description and date already exists.');
+        err.name = 'DuplicateEvent';
+        throw err;
+    }
+
     shop.events.push(eventData);
     await shop.save();
 
