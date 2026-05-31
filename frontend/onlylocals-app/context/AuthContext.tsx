@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
+import { setSessionExpiredCallback } from '../services/api';
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -32,6 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     };
     checkToken();
+  }, []);
+
+  useEffect(() => {
+    setSessionExpiredCallback(() => {
+      setIsLoggedIn(false);
+      setRole(null);
+      setShopId(null);
+    });
   }, []);
 
   const login = async (credentials: { identifier: string; password: string }) => {
