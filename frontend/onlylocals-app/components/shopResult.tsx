@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import Mapbox from '@rnmapbox/maps';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Shop } from '../types/shop';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
 import { userService } from '../services/userServices';
+import apiClient from '../services/api';
 
 // Configurazione Token Mapbox
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
@@ -22,10 +23,20 @@ const giorniSettimana = [
 ];
 
 export default function ShopResult({ isLoading, errorMessage, shopData, shopId }: ShopResultProps) {
-  const [isFavorite, setIsFavorite] = useState(false); 
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { isLoggedIn, role } = useAuth();
+
+  useEffect(() => {
+    if (!isLoggedIn || !shopId) return;
+    apiClient.get('/users/favorites')
+      .then(res => {
+        const list: { _id: string }[] = res.data?.data ?? [];
+        setIsFavorite(list.some(f => f._id === shopId));
+      })
+      .catch(() => {});
+  }, [isLoggedIn, shopId]);
   const router = useRouter();
 
 
