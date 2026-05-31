@@ -580,6 +580,11 @@ router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.s
  */
 router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
 
+router.patch('/pushToken', authMiddleware.autenticateToken, userController.savePushToken);
+
+router.get('/notifications', authMiddleware.autenticateToken, userController.getNotifications);
+router.patch('/notifications/read-all', authMiddleware.autenticateToken, userController.markAllNotificationsRead);
+router.patch('/notifications/:notificationId/read', authMiddleware.autenticateToken, userController.markNotificationRead);
 /**
  * @openapi
  * /api/users/me:

@@ -87,7 +87,7 @@ export default function FavoritesScreen() {
         <Text style={styles.headerTitle}>Preferiti</Text>
         <TouchableOpacity
           style={styles.bellBtn}
-          onPress={() => router.push('/(customer)/notifications')}
+          onPress={() => router.push('/(customer)/(tabs)/notifications')}
           activeOpacity={0.7}
         >
           <Ionicons name="notifications-outline" size={26} color="#255cb3" />
