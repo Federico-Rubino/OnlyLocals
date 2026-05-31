@@ -113,7 +113,7 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.navigate('/(customer)/(tabs)/favorites')} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={26} color="#255cb3" />
         </TouchableOpacity>
         <Text style={styles.title}>Notifiche</Text>
