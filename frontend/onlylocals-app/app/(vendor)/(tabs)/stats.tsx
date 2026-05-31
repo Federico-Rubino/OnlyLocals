@@ -179,20 +179,15 @@ export default function StatisticheScreen() {
         </View>
       </View>
 
-      {/* Rating card */}
-      <View style={styles.card}>
+      {/* Rating card — entire card is tappable */}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push('/(vendor)/feedbacks')}
+        activeOpacity={0.85}
+      >
         <View style={styles.ratingHeader}>
           <Text style={styles.cardTitle}>Valutazione media</Text>
-          {(stats.totalFeedback ?? 0) > 0 && (
-            <TouchableOpacity
-              style={styles.reviewsBtn}
-              onPress={() => router.push('/(vendor)/feedbacks')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.reviewsBtnText}>Vedi tutte</Text>
-              <Ionicons name="chevron-forward" size={14} color="#1a2a4a" />
-            </TouchableOpacity>
-          )}
+          <Ionicons name="chevron-forward" size={16} color="#aaa" />
         </View>
 
         <View style={styles.ratingRow}>
@@ -206,10 +201,10 @@ export default function StatisticheScreen() {
 
         <Text style={styles.ratingSubtitle}>
           {(stats.totalFeedback ?? 0) > 0
-            ? `Basata su ${stats.totalFeedback} ${stats.totalFeedback === 1 ? 'recensione' : 'recensioni'}`
+            ? `Basata su ${stats.totalFeedback} ${stats.totalFeedback === 1 ? 'recensione' : 'recensioni'} · Tocca per leggere`
             : 'Ancora nessuna recensione'}
         </Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Views chart card */}
       <View style={styles.card}>
@@ -233,8 +228,6 @@ const styles = StyleSheet.create({
   statNumber:     { fontSize: 32, fontWeight: '700', color: '#1a2a4a' },
   statLabel:      { fontSize: 12, color: '#6b6b6b' },
   ratingHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  reviewsBtn:     { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  reviewsBtnText: { fontSize: 13, color: '#1a2a4a', fontWeight: '600' },
   ratingRow:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 6 },
   ratingNumber:   { fontSize: 40, fontWeight: '700', color: '#1a2a4a' },
   ratingSubtitle: { fontSize: 12, color: '#6b6b6b' },
