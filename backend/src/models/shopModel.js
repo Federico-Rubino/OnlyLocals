@@ -44,7 +44,8 @@ const FidelityCardSchema = new mongoose.Schema({
   numeroUtenti: Number,
   ultimaModifica: Date,
   modificabile: Boolean,
-  tassoConversione : Number,
+  tassoConversione: Number,
+  modo: { type: String, enum: ['visita', 'acquisto'] },
   vantaggi: [VantaggioSchema]
 }, { _id: false });
 

@@ -202,25 +202,3 @@ exports.getPoints = async (req, res) => {
     }
 };
 
-exports.redeemVantaggio = async (req, res) => {
-    try {
-        const userId = req.user.userId;
-        const { shopId, descrizioneVantaggio } = req.body;
-
-        const result = await userService.redeemVantaggio(userId, shopId, descrizioneVantaggio);
-
-        res.status(200).json({
-            success: true,
-            message: "Vantaggio riscattato con successo",
-            data: result
-        });
-    } catch (err) {
-        if (err.message === "Not enough points") {
-            return res.status(400).json({ success: false, message: err.message });
-        }
-        if (err.message === "Vantaggio not found") {
-            return res.status(404).json({ success: false, message: err.message });
-        }
-        res.status(500).json({ success: false, message: "Internal server error" });
-    }
-};

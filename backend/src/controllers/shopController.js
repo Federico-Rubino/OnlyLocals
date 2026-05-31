@@ -231,6 +231,9 @@ exports.scanFidelityCard = async (req, res) => {
         if (err.message === "Not a vendor") {
             return res.status(403).json({ success: false, message: err.message });
         }
+        if (err.message === "Modalità non compatibile: shop usa punti per acquisto, usa addPoints") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }
 };
@@ -304,6 +307,12 @@ exports.addPoints = async (req, res) => {
         }
         if (err.message === "Not a vendor") {
             return res.status(403).json({ success: false, message: err.message });
+        }
+        if (err.message === "Modalità non compatibile: shop usa punti per visita, usa scan") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Tasso di conversione non configurato") {
+            return res.status(400).json({ success: false, message: err.message });
         }
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }

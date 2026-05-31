@@ -250,47 +250,11 @@ router.patch('/profile', authMiddleware.autenticateToken, userController.updateP
  *                     properties:
  *                       activity:
  *                         type: string
- *                       points:
+ *                       count:
  *                         type: integer
  *       404:
  *         description: Fidelity card not found
  */
 router.get('/fidelity/points', authMiddleware.autenticateToken, userController.getPoints);
-
-/**
- * @openapi
- * /api/users/fidelity/redeem:
- *   post:
- *     summary: Redeem a vantaggio
- *     description: Redeem a fidelity vantaggio using accumulated points
- *     tags:
- *       - Users
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - shopId
- *               - descrizioneVantaggio
- *             properties:
- *               shopId:
- *                 type: string
- *                 example: "64abc123..."
- *               descrizioneVantaggio:
- *                 type: string
- *                 example: "Sconto 10%"
- *     responses:
- *       200:
- *         description: Vantaggio riscattato
- *       400:
- *         description: Not enough points
- *       404:
- *         description: Vantaggio not found
- */
-router.post('/fidelity/redeem', authMiddleware.autenticateToken, userController.redeemVantaggio);
 
 module.exports = router;

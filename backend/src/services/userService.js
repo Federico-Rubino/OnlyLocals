@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
@@ -230,33 +231,3 @@ exports.getPoints = async (userId) => {
     return user.fidelityCard.points;
 };
 
-exports.redeemVantaggio = async (userId, shopId, descrizioneVantaggio) => {
-    const user = await User.findById(userId);
-    if (!user) throw new Error("User not found");
-
-    if (!user.fidelityCard) throw new Error("Fidelity card not found");
-
-   
-    const pointEntry = user.fidelityCard.points.find(p => p.activity === shopId.toString() );
-    if (!pointEntry) throw new Error("No points for this shop");
-
-    
-    const shop = await Shop.findById(shopId);
-    if (!shop) throw new Error("Shop not found");
-
-    const vantaggio = shop.fidelityCardManager.vantaggi.find( v => v.descrizione === descrizioneVantaggio);
-    if (!vantaggio) throw new Error("Vantaggio not found");
-
-   
-    if (pointEntry.points < vantaggio.sogliaPunti) {
-        throw new Error("Not enough points");
-    }
-
-    pointEntry.points -= vantaggio.sogliaPunti;
-    await user.save();
-
-    return { 
-        vantaggio, 
-        puntiRimanenti: pointEntry.points 
-    };
-};
