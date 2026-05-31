@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 const ROLE_KEY = 'user_role';
+const SHOP_ID_KEY = 'vendor_shop_id';
 
 export const tokenService = {
   // Save access and refresh token
@@ -54,12 +55,36 @@ export const tokenService = {
     }
   },
 
+  // Save shopId
+  setShopId: async (shopId: string | null) => {
+    try {
+      if (shopId) {
+        await SecureStore.setItemAsync(SHOP_ID_KEY, shopId);
+      } else {
+        await SecureStore.deleteItemAsync(SHOP_ID_KEY);
+      }
+    } catch (error) {
+      console.error('Error saving shopId', error);
+    }
+  },
+
+  // Get shopId
+  getShopId: async (): Promise<string | null> => {
+    try {
+      return await SecureStore.getItemAsync(SHOP_ID_KEY);
+    } catch (error) {
+      console.error('Error getting shopId', error);
+      return null;
+    }
+  },
+
   // Delete everything
   clearTokens: async () => {
     try {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       await SecureStore.deleteItemAsync(ROLE_KEY);
+      await SecureStore.deleteItemAsync(SHOP_ID_KEY);
     } catch (error) {
       console.error('Error deleting tokens', error);
     }

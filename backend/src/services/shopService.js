@@ -1,5 +1,6 @@
 const Shop = require('../models/shopModel');
 const User = require('../models/userModel');
+const notificationService = require('./notificationService');
 
 
 exports.getShopById = async (id) =>{
@@ -143,12 +144,15 @@ exports.searchShops = async (filters) => {
     return await Shop.find(query).select('name itinerario');
 };
 
-exports.addEvent= async (vendorId, eventData) => {
-    
+exports.addEvent = async (vendorId, eventData) => {
     const shop = await getShopFromVendor(vendorId);
 
     shop.events.push(eventData);
     await shop.save();
+
+    notificationService.notifyShopFollowers(shop._id, shop.name, 'event', eventData).catch(err => {
+        console.error('Notification error:', err);
+    });
 
     return shop.events;
 }
@@ -189,6 +193,10 @@ exports.addPromotion = async (vendorId, data) => {
 
     shop.promotions.push(promotion);
     await shop.save();
+
+    notificationService.notifyShopFollowers(shop._id, shop.name, 'promotion', data).catch(err => {
+        console.error('Notification error:', err);
+    });
 
     return shop._id;
 };
