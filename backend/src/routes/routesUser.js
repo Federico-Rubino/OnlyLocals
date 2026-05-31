@@ -625,4 +625,5 @@ router.patch('/notifications/:notificationId/read', authMiddleware.autenticateTo
  */
 router.get('/me', authMiddleware.autenticateToken, userController.getUserData);
 
+router.get('/favorites', authMiddleware.autenticateToken, userController.getFavorites);
 module.exports = router;
