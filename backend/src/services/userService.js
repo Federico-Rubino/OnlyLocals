@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
@@ -14,6 +15,8 @@ exports.createUser = async (data) => {
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
+  const userId = new mongoose.Types.ObjectId();//barcode
+
   const user = {
     name: data.name,
     surname: data.surname,
@@ -23,6 +26,10 @@ exports.createUser = async (data) => {
       passwordHash: hashedPassword,
       username: data.username
     },
+     fidelityCard: {
+      barcode: userId.toString(),
+      points: []
+    }
 
   };
 
@@ -249,6 +256,19 @@ exports.updatePersonalData = async (userId, newInfo) => {
   
   return changes;
 }
+
+exports.getPoints = async (userId) => {
+    const user = await User.findById(userId).select('fidelityCard');
+    if (!user) throw new Error("User not found");
+
+    if (!user.fidelityCard || !user.fidelityCard.barcode) {
+        throw new Error("Fidelity card not found");
+    }
+
+    return user.fidelityCard.points;
+};
+
+
 
 exports.getUserData = async (userId) =>{
   const user = await User.findById(userId).select('-auth'); //pswd and token are never send to client
