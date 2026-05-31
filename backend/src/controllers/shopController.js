@@ -408,7 +408,7 @@ exports.getStatistiche = async (req,res)=>{
                     numSalvataggi: shop.statistiche.numSalvataggi,
                     votoMedio: shop.statistiche.votoMedio,
                     totalFeedback: shop.statistiche.totaleFeedback,
-                    mappaAccessi: shop.statistiche.storicoFeedback,
+                    mappaAccessi: shop.statistiche.mappaAccessi,
                     storicoFeedback: shop.statistiche.storicoFeedback,
                     ultimoAggiornamento: shop.statistiche.ultimoAggiornamento
                 } : "Nessuna statistica disponibile"
