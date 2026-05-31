@@ -1,4 +1,5 @@
-import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,8 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import apiClient from '../../../services/api';
 import { getNotifications } from '../../../services/notificationService';
 
@@ -58,6 +57,21 @@ export default function FavoritesScreen() {
       load();
       return () => { active = false; };
     }, [])
+  );
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const notifications = await getNotifications();
+      setUnreadCount(notifications.filter(n => !n.read).length);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+    }, [fetchUnreadCount])
   );
 
   const removeShop = async (shopId: string) => {
