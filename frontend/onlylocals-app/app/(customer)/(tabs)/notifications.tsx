@@ -10,7 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AppNotification, notificationService } from '../../../services/notificationServices';
+import { AppNotification, notificationService } from '../../../services/notificationService';
+
+function formatDate(dateStr: string | undefined): string | null {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('it-IT', {
+    day: '2-digit', month: 'long', year: 'numeric',
+  });
+}
 
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -54,33 +61,47 @@ export default function NotificationsScreen() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const renderItem = ({ item }: { item: AppNotification }) => {
-    const date = new Date(item.eventDate).toLocaleDateString('it-IT', {
-      day: '2-digit', month: 'long', year: 'numeric'
-    });
+    const isPromotion = item.type === 'promotion';
+    const iconName: any = isPromotion ? 'pricetag-outline' : 'calendar-outline';
+    const accentColor = isPromotion ? '#e65100' : '#255cb3';
+
+    const title = isPromotion ? item.promotionDescription : item.eventName;
+    const subtitle = isPromotion ? item.promotionValue : item.eventDescription;
+    const dateLabel = isPromotion
+      ? formatDate(item.promotionStartDate)
+      : formatDate(item.eventDate);
 
     return (
       <TouchableOpacity
-        style={[styles.item, !item.read && styles.itemUnread]}
+        style={[
+          styles.item,
+          !item.read && styles.itemUnread,
+          isPromotion && !item.read && styles.itemUnreadPromo,
+        ]}
         onPress={() => !item.read && handleMarkAsRead(item._id)}
         activeOpacity={0.7}
       >
         <View style={styles.itemIcon}>
-          <Ionicons name="calendar-outline" size={22} color={item.read ? '#aaa' : '#255cb3'} />
+          <Ionicons name={iconName} size={22} color={item.read ? '#aaa' : accentColor} />
         </View>
         <View style={styles.itemContent}>
-          <Text style={styles.shopName}>{item.shopName}</Text>
-          <Text style={styles.eventName}>{item.eventName}</Text>
-          {!!item.eventDescription && (
-            <Text style={styles.eventDesc} numberOfLines={2}>{item.eventDescription}</Text>
+          <Text style={[styles.shopName, isPromotion && styles.shopNamePromo]}>
+            {item.shopName}
+          </Text>
+          {!!title && <Text style={styles.eventName}>{title}</Text>}
+          {!!subtitle && (
+            <Text style={styles.eventDesc} numberOfLines={2}>{subtitle}</Text>
           )}
-          <Text style={styles.eventDate}>{date}</Text>
+          {!!dateLabel && <Text style={styles.eventDate}>{dateLabel}</Text>}
         </View>
-        {!item.read && <View style={styles.unreadDot} />}
+        {!item.read && (
+          <View style={[styles.unreadDot, isPromotion && styles.unreadDotPromo]} />
+        )}
       </TouchableOpacity>
     );
   };
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} color="#255cb3" />;
 
   return (
     <View style={styles.container}>
@@ -97,34 +118,44 @@ export default function NotificationsScreen() {
         data={notifications}
         keyExtractor={item => item._id}
         renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="notifications-off-outline" size={48} color="#ccc" />
             <Text style={styles.emptyText}>Nessuna notifica</Text>
           </View>
         }
-        contentContainerStyle={notifications.length === 0 ? styles.emptyContainer : { paddingBottom: 20 }}
+        contentContainerStyle={
+          notifications.length === 0 ? styles.emptyContainer : { paddingBottom: 20 }
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: '#f5f7fa' },
-  header:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12 },
-  title:         { fontSize: 26, fontWeight: '700', color: '#1a2a4a' },
-  markAllText:   { fontSize: 13, color: '#255cb3', fontWeight: '500' },
-  item:          { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 10, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.08)' },
-  itemUnread:    { borderColor: '#255cb3', backgroundColor: '#f0f5ff' },
-  itemIcon:      { marginRight: 12, marginTop: 2 },
-  itemContent:   { flex: 1 },
-  shopName:      { fontSize: 12, fontWeight: '600', color: '#255cb3', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  eventName:     { fontSize: 15, fontWeight: '600', color: '#1a1a1a', marginBottom: 2 },
-  eventDesc:     { fontSize: 13, color: '#6b6b6b', marginBottom: 4 },
-  eventDate:     { fontSize: 12, color: '#aaa' },
-  unreadDot:     { width: 8, height: 8, borderRadius: 4, backgroundColor: '#255cb3', marginTop: 4, marginLeft: 6 },
-  empty:         { alignItems: 'center', gap: 12 },
-  emptyContainer:{ flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText:     { fontSize: 16, color: '#aaa' },
+  container:       { flex: 1, backgroundColor: '#f5f7fa' },
+  header:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12 },
+  title:           { fontSize: 26, fontWeight: '700', color: '#1a2a4a' },
+  markAllText:     { fontSize: 13, color: '#255cb3', fontWeight: '500' },
+  item:            { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 10, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.08)' },
+  itemUnread:      { borderColor: '#255cb3', backgroundColor: '#f0f5ff' },
+  itemUnreadPromo: { borderColor: '#e65100', backgroundColor: '#fff8f0' },
+  itemIcon:        { marginRight: 12, marginTop: 2 },
+  itemContent:     { flex: 1 },
+  shopName:        { fontSize: 12, fontWeight: '600', color: '#255cb3', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  shopNamePromo:   { color: '#e65100' },
+  eventName:       { fontSize: 15, fontWeight: '600', color: '#1a1a1a', marginBottom: 2 },
+  eventDesc:       { fontSize: 13, color: '#6b6b6b', marginBottom: 4 },
+  eventDate:       { fontSize: 12, color: '#aaa' },
+  unreadDot:       { width: 8, height: 8, borderRadius: 4, backgroundColor: '#255cb3', marginTop: 4, marginLeft: 6 },
+  unreadDotPromo:  { backgroundColor: '#e65100' },
+  empty:           { alignItems: 'center', gap: 12 },
+  emptyContainer:  { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText:       { fontSize: 16, color: '#aaa' },
 });

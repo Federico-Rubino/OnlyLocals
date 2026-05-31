@@ -210,6 +210,13 @@ exports.markNotificationRead = async (userId, notificationId) => {
   );
 };
 
+exports.markAllNotificationsRead = async (userId) => {
+  await User.updateOne(
+    { _id: userId },
+    { $set: { 'notifications.$[].read': true } }
+  );
+};
+
 exports.updatePersonalData = async (userId, newInfo) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");

@@ -31,6 +31,38 @@ function sendExpoPushNotifications(messages) {
   });
 }
 
+exports.notifyVendor = async (shopId, shopName, feedbackData) => {
+  const vendor = await User.findOne({ vendorShop: shopId, role: 'vendor' });
+  if (!vendor) return;
+
+  const notification = {
+    type: 'feedback',
+    shopId,
+    shopName,
+    feedbackAuthorName: feedbackData.authorName,
+    feedbackRating: feedbackData.rating,
+    feedbackComment: feedbackData.comment,
+    sentAt: new Date(),
+    read: false
+  };
+
+  await User.findByIdAndUpdate(vendor._id, { $push: { notifications: notification } });
+
+  if (vendor.pushToken) {
+    const stars = '★'.repeat(feedbackData.rating) + '☆'.repeat(5 - feedbackData.rating);
+    try {
+      await sendExpoPushNotifications([{
+        to: vendor.pushToken,
+        title: `Nuovo feedback per ${shopName}`,
+        body: `${feedbackData.authorName} — ${stars}`,
+        data: { shopId: shopId.toString(), type: 'feedback' }
+      }]);
+    } catch (err) {
+      console.error('Push notification delivery error:', err);
+    }
+  }
+};
+
 exports.notifyShopFollowers = async (shopId, shopName, type, payload) => {
   const notification = { type, shopId, shopName, sentAt: new Date(), read: false };
   let pushTitle, pushBody;

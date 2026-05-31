@@ -226,6 +226,7 @@ router.patch('/profile', authMiddleware.autenticateToken, userController.updateP
 router.patch('/pushToken', authMiddleware.autenticateToken, userController.savePushToken);
 
 router.get('/notifications', authMiddleware.autenticateToken, userController.getNotifications);
+router.patch('/notifications/read-all', authMiddleware.autenticateToken, userController.markAllNotificationsRead);
 router.patch('/notifications/:notificationId/read', authMiddleware.autenticateToken, userController.markNotificationRead);
 
 module.exports = router;

@@ -189,6 +189,16 @@ exports.markNotificationRead = async (req, res) => {
   }
 };
 
+exports.markAllNotificationsRead = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await userService.markAllNotificationsRead(userId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 exports.getFavorites = async (req, res) => {
   try {
     const userId = req.user.userId;
