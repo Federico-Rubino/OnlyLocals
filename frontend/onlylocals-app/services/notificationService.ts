@@ -6,7 +6,7 @@ import apiClient from './api';
 
 export interface AppNotification {
   _id: string;
-  type: 'event' | 'promotion';
+  type: 'event' | 'promotion' | 'feedback';
   shopId: string;
   shopName: string;
   // event
@@ -18,6 +18,10 @@ export interface AppNotification {
   promotionValue?: string;
   promotionStartDate?: string;
   promotionEndDate?: string;
+  // feedback
+  feedbackAuthorName?: string;
+  feedbackRating?: number;
+  feedbackComment?: string;
   sentAt: string;
   read: boolean;
 }
@@ -30,6 +34,16 @@ export async function getNotifications(): Promise<AppNotification[]> {
 export async function markNotificationRead(notificationId: string): Promise<void> {
   await apiClient.patch(`/users/notifications/${notificationId}/read`);
 }
+
+export async function markAllAsRead(): Promise<void> {
+  await apiClient.patch('/users/notifications/read-all');
+}
+
+export const notificationService = {
+  getNotifications,
+  markAsRead: markNotificationRead,
+  markAllAsRead,
+};
 
 export async function registerForPushNotifications(): Promise<void> {
     Notifications.setNotificationHandler({

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { getNotifications } from '../../../services/notificationService';
 import {
   ActivityIndicator,
   Alert,
@@ -49,8 +50,22 @@ export default function VetrinaScreen() {
   const [eventoDate, setEventoDate] = useState('');
   const [eventoToDelete, setEventoToDelete] = useState('');
 
+  const [unreadCount, setUnreadCount] = useState(0);
   const [shopModalVisible, setShopModalVisible] = useState(false);
   const [editShopData, setEditShopData] = useState({ name: shopName, description: shopDescription });
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const notifications = await getNotifications();
+      setUnreadCount(notifications.filter(n => !n.read).length);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
      useEffect(() => {
     const loadShop = async () => {
@@ -222,7 +237,23 @@ export default function VetrinaScreen() {
     >
       <StatusBar barStyle="dark-content" />
 
-      <Text style={styles.pageTitle}>Vetrina</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.pageTitle}>Vetrina</Text>
+        <TouchableOpacity
+          style={styles.bellBtn}
+          onPress={() => router.push('/(vendor)/notifications')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="notifications-outline" size={26} color="#1a2a4a" />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
       {/* Card Negozio */}
       <View style={styles.card}>
@@ -459,7 +490,11 @@ export default function VetrinaScreen() {
 
 const styles = StyleSheet.create({
   container:        { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  pageTitle:        { fontSize: 26, fontWeight: '700', color: '#1a2a4a', marginBottom: 20, letterSpacing: -0.3 },
+  titleRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  pageTitle:        { fontSize: 26, fontWeight: '700', color: '#1a2a4a', letterSpacing: -0.3 },
+  bellBtn:          { position: 'relative', padding: 4 },
+  bellBadge:        { position: 'absolute', top: 0, right: 0, backgroundColor: '#e53935', borderRadius: 8, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 2 },
+  bellBadgeText:    { color: '#fff', fontSize: 10, fontWeight: '700' },
   card:             { backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.10)', padding: 14, paddingRight: 48, marginBottom: 12 },
   cardTitle:        { fontSize: 16, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
   cardText:         { fontSize: 13, color: '#6b6b6b', lineHeight: 19 },

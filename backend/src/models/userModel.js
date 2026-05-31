@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const FidelityCardSchema = require('./fidelityCardModel.js');
 
 const NotificationSchema = new mongoose.Schema({
-  type: { type: String, enum: ['event', 'promotion'], default: 'event' },
+  type: { type: String, enum: ['event', 'promotion', 'feedback'], default: 'event' },
   shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop' },
   shopName: String,
   // event fields
@@ -14,6 +14,10 @@ const NotificationSchema = new mongoose.Schema({
   promotionValue: String,
   promotionStartDate: Date,
   promotionEndDate: Date,
+  // feedback fields
+  feedbackAuthorName: String,
+  feedbackRating: Number,
+  feedbackComment: String,
   sentAt: { type: Date, default: Date.now },
   read: { type: Boolean, default: false }
 });

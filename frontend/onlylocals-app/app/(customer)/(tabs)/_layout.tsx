@@ -65,7 +65,7 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen
-        name="profile" 
+        name="profile"
         options={{
           title: 'Profilo',
           tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
@@ -82,6 +82,10 @@ export default function TabLayout() {
             />
           ),
         }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{ href: null }}
       />
     </Tabs>
   );
