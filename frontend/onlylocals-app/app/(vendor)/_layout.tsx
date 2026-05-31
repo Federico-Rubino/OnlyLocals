@@ -5,6 +5,7 @@ export default function VendorLayout() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="feedbacks" options={{ headerShown: false }} />
     </Stack>
   );
 }

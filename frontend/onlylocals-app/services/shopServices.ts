@@ -51,6 +51,13 @@ export interface AccessoEntry {
   valore: number;
 }
 
+export interface FeedbackEntry {
+  _id: string;
+  voto: number;
+  commento?: string;
+  data: string;
+}
+
 export interface StatisticheData {
   nomeShop: string;
   statistiche: {
@@ -58,6 +65,7 @@ export interface StatisticheData {
     votoMedio: number;
     totalFeedback: number;
     mappaAccessi: AccessoEntry[];
+    storicoFeedback: FeedbackEntry[];
     ultimoAggiornamento: string;
   } | string;
 }
