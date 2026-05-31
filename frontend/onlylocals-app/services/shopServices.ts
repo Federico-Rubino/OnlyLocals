@@ -52,9 +52,9 @@ export interface AccessoEntry {
 }
 
 export interface FeedbackEntry {
-  _id: string;
   voto: number;
   commento?: string;
+  user?: { name?: string; surname?: string } | string | null;
   data: string;
 }
 

@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
-  StatusBar,
+  FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,117 +11,160 @@ import {
 } from 'react-native';
 import { getStatistiche, type FeedbackEntry } from '../../services/shopServices';
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <View style={{ flexDirection: 'row', gap: 2 }}>
-      {[1, 2, 3, 4, 5].map(star => {
-        const name =
-          rating >= star ? 'star' : rating >= star - 0.5 ? 'star-half' : 'star-outline';
-        return <Ionicons key={star} name={name as any} size={15} color="#f59e0b" />;
-      })}
-    </View>
-  );
+const VENDOR_BLUE = '#1a2a4a';
+
+function authorLabel(user: FeedbackEntry['user']): string {
+  if (!user || typeof user === 'string') return 'Cliente';
+  const full = [user.name, user.surname].filter(Boolean).join(' ').trim();
+  return full || 'Cliente';
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('it-IT', {
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('it-IT', {
     day: '2-digit',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   });
 }
 
-export default function FeedbacksScreen() {
-  const [loading, setLoading] = useState(true);
-  const [feedbacks, setFeedbacks] = useState<FeedbackEntry[]>([]);
-  const [shopName, setShopName] = useState('');
+function StarRow({ rating }: { rating: number }) {
+  return (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <Ionicons
+          key={i}
+          name={i <= rating ? 'star' : 'star-outline'}
+          size={14}
+          color={i <= rating ? '#f5a623' : '#ccc'}
+        />
+      ))}
+    </View>
+  );
+}
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await getStatistiche();
-        setShopName(data.nomeShop ?? '');
-        if (typeof data.statistiche !== 'string') {
-          const sorted = [...(data.statistiche.storicoFeedback ?? [])].sort(
-            (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
-          );
-          setFeedbacks(sorted);
-        }
-      } catch {
-        // feedbacks stays empty
-      } finally {
-        setLoading(false);
+export default function VendorFeedbacksScreen() {
+  const router = useRouter();
+  const [feedbacks, setFeedbacks] = useState<FeedbackEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchFeedbacks = useCallback(async () => {
+    try {
+      setError(null);
+      const result = await getStatistiche();
+      if (typeof result.statistiche === 'string') {
+        setFeedbacks([]);
+      } else {
+        // mostra prima i feedback più recenti
+        const list = [...(result.statistiche.storicoFeedback ?? [])].sort(
+          (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
+        );
+        setFeedbacks(list);
       }
+    } catch {
+      setError('Errore nel caricamento dei feedback.');
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
 
-  return (
-    <View style={styles.root}>
-      <StatusBar barStyle="dark-content" />
+  useEffect(() => {
+    fetchFeedbacks();
+  }, [fetchFeedbacks]);
 
-      {/* Header */}
+  const renderItem = ({ item }: { item: FeedbackEntry }) => (
+    <View style={styles.card}>
+      <View style={styles.topRow}>
+        <Text style={styles.authorName}>{authorLabel(item.user)}</Text>
+        <StarRow rating={item.voto} />
+      </View>
+      {item.commento ? (
+        <Text style={styles.comment}>"{item.commento}"</Text>
+      ) : (
+        <Text style={styles.noComment}>Nessun commento</Text>
+      )}
+      <Text style={styles.date}>{formatDate(item.data)}</Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={24} color="#1a2a4a" />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={26} color={VENDOR_BLUE} />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Recensioni</Text>
-          {!!shopName && <Text style={styles.headerSub}>{shopName}</Text>}
-        </View>
+        <Text style={styles.headerTitle}>Recensioni</Text>
+        <View style={{ width: 36 }} />
       </View>
 
       {loading ? (
+        <ActivityIndicator style={styles.center} size="large" color={VENDOR_BLUE} />
+      ) : error ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#1a2a4a" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={fetchFeedbacks} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Riprova</Text>
+          </TouchableOpacity>
         </View>
       ) : feedbacks.length === 0 ? (
         <View style={styles.center}>
-          <Ionicons name="chatbubble-outline" size={48} color="#ccc" />
-          <Text style={styles.emptyText}>Ancora nessuna recensione</Text>
+          <Ionicons name="chatbubble-outline" size={56} color="#ccc" />
+          <Text style={styles.emptyText}>Nessuna recensione ancora.</Text>
+          <Text style={styles.emptySubText}>
+            Le recensioni dei clienti appariranno qui.
+          </Text>
         </View>
       ) : (
-        <ScrollView
-          style={styles.list}
-          contentContainerStyle={{ paddingBottom: 32 }}
+        <FlatList
+          data={feedbacks}
+          keyExtractor={(_, i) => String(i)}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.countLabel}>
-            {feedbacks.length} {feedbacks.length === 1 ? 'recensione' : 'recensioni'}
-          </Text>
-
-          {feedbacks.map((fb, i) => (
-            <View key={fb._id ?? i} style={styles.card}>
-              <View style={styles.cardTop}>
-                <StarRating rating={fb.voto} />
-                <Text style={styles.date}>{formatDate(fb.data)}</Text>
-              </View>
-              {fb.commento ? (
-                <Text style={styles.comment}>{fb.commento}</Text>
-              ) : (
-                <Text style={styles.noComment}>Nessun commento</Text>
-              )}
-            </View>
-          ))}
-        </ScrollView>
+        />
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root:        { flex: 1, backgroundColor: '#f5f7fa' },
-  header:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 56, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.10)' },
-  backBtn:     { width: 36, height: 36, borderRadius: 10, backgroundColor: '#f0f2f5', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1a2a4a' },
-  headerSub:   { fontSize: 12, color: '#6b6b6b', marginTop: 1 },
-  center:      { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  emptyText:   { fontSize: 15, color: '#aaa' },
-  list:        { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  countLabel:  { fontSize: 13, color: '#6b6b6b', marginBottom: 12 },
-  card:        { backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.10)', padding: 14, marginBottom: 10 },
-  cardTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  date:        { fontSize: 11, color: '#aaa' },
-  comment:     { fontSize: 14, color: '#1a1a1a', lineHeight: 20 },
-  noComment:   { fontSize: 13, color: '#bbb', fontStyle: 'italic' },
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 60,
+    paddingBottom: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  backBtn: { width: 36, alignItems: 'flex-start' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1a1a1a' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  list: { padding: 16, gap: 10 },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  authorName: { fontSize: 14, fontWeight: '700', color: '#1a1a1a', flex: 1, marginRight: 8 },
+  starRow: { flexDirection: 'row', gap: 2 },
+  comment: { fontSize: 13, color: '#555', fontStyle: 'italic', marginBottom: 6, lineHeight: 18 },
+  noComment: { fontSize: 13, color: '#bbb', fontStyle: 'italic', marginBottom: 6 },
+  date: { fontSize: 11, color: '#bbb', textAlign: 'right' },
+  emptyText: { fontSize: 17, fontWeight: '600', color: '#888', marginTop: 16 },
+  emptySubText: { fontSize: 13, color: '#aaa', marginTop: 6, textAlign: 'center' },
+  errorText: { fontSize: 15, color: '#e53935', textAlign: 'center', marginBottom: 12 },
+  retryBtn: { backgroundColor: VENDOR_BLUE, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10 },
+  retryText: { color: '#fff', fontWeight: '600' },
 });
