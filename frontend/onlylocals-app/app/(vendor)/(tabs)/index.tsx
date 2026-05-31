@@ -20,7 +20,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById, updateShop } from '../../../services/shopServices';
 
 type Promozione = { id: number; nome: string; sconto: string; };
-type Evento = { id: number; titolo: string; descrizione: string; };
+type Evento = { id: number; titolo: string; descrizione: string; data: string; };
 type BottomSheetType = 'promozioni' | 'eventi' | null;
 type FormType = 'nuovaPromo' | 'eliminaPromo' | 'nuovoEvento' | 'eliminaEvento' | null;
 
@@ -89,6 +89,7 @@ export default function VetrinaScreen() {
           id: i,
           titolo: e.name,
           descrizione: e.description,
+          data: e.date ? e.date.split('T')[0] : '',
         })));
       } catch (err: any) {
         if (err.response?.status === 401) {
@@ -169,17 +170,26 @@ export default function VetrinaScreen() {
       return;
     }
 
+    const normalizedDate = eventoDate.trim();
+    const isDuplicate = eventi.some(
+      e => e.descrizione === eventoDesc.trim() && e.data === normalizedDate
+    );
+    if (isDuplicate) {
+      Alert.alert('Attenzione', 'Esiste già un evento con la stessa descrizione e data.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Forza formato ISO completo
-      const dataISO = `${eventoDate.trim()}T10:00:00.000Z`;
-      
+      const dataISO = `${normalizedDate}T10:00:00.000Z`;
+
       await addEvento({
         name: eventoTitolo.trim(),
         description: eventoDesc.trim(),
         date: dataISO,
       });
-      setEventi(prev => [...prev, { id: Date.now(), titolo: eventoTitolo.trim(), descrizione: eventoDesc.trim() }]);
+      setEventi(prev => [...prev, { id: Date.now(), titolo: eventoTitolo.trim(), descrizione: eventoDesc.trim(), data: normalizedDate }]);
       closeForm();
       Alert.alert('Successo', 'Evento aggiunto!');
     } catch (err: any) {
