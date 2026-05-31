@@ -6,11 +6,18 @@ import apiClient from './api';
 
 export interface AppNotification {
   _id: string;
+  type: 'event' | 'promotion';
   shopId: string;
   shopName: string;
-  eventName: string;
-  eventDescription: string;
-  eventDate: string;
+  // event
+  eventName?: string;
+  eventDescription?: string;
+  eventDate?: string;
+  // promotion
+  promotionDescription?: string;
+  promotionValue?: string;
+  promotionStartDate?: string;
+  promotionEndDate?: string;
   sentAt: string;
   read: boolean;
 }

@@ -132,8 +132,7 @@ exports.addEvent = async (vendorId, eventData) => {
     shop.events.push(eventData);
     await shop.save();
 
-    // Fire-and-forget: notify users who saved this shop
-    notificationService.notifyShopFollowers(shop._id, shop.name, eventData).catch(err => {
+    notificationService.notifyShopFollowers(shop._id, shop.name, 'event', eventData).catch(err => {
         console.error('Notification error:', err);
     });
 
@@ -176,6 +175,10 @@ exports.addPromotion = async (vendorId, data) => {
 
     shop.promotions.push(promotion);
     await shop.save();
+
+    notificationService.notifyShopFollowers(shop._id, shop.name, 'promotion', data).catch(err => {
+        console.error('Notification error:', err);
+    });
 
     return shop._id;
 };

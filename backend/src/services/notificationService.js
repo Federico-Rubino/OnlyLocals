@@ -31,24 +31,30 @@ function sendExpoPushNotifications(messages) {
   });
 }
 
-exports.notifyShopFollowers = async (shopId, shopName, eventData) => {
-  const notification = {
-    shopId,
-    shopName,
-    eventName: eventData.name,
-    eventDescription: eventData.description,
-    eventDate: eventData.date,
-    sentAt: new Date(),
-    read: false
-  };
+exports.notifyShopFollowers = async (shopId, shopName, type, payload) => {
+  const notification = { type, shopId, shopName, sentAt: new Date(), read: false };
+  let pushTitle, pushBody;
 
-  // Persist notification for every user who saved this shop
+  if (type === 'event') {
+    notification.eventName = payload.name;
+    notification.eventDescription = payload.description;
+    notification.eventDate = payload.date;
+    pushTitle = `Nuovo evento da ${shopName}`;
+    pushBody = payload.name;
+  } else {
+    notification.promotionDescription = payload.description;
+    notification.promotionValue = payload.value;
+    notification.promotionStartDate = payload.startDate;
+    notification.promotionEndDate = payload.endDate;
+    pushTitle = `Nuova promozione da ${shopName}`;
+    pushBody = `${payload.description} — ${payload.value}`;
+  }
+
   await User.updateMany(
     { savedShops: shopId },
     { $push: { notifications: notification } }
   );
 
-  // Send push only to users who have a token
   const users = await User.find(
     { savedShops: shopId, pushToken: { $ne: null, $exists: true } },
     'pushToken'
@@ -58,9 +64,9 @@ exports.notifyShopFollowers = async (shopId, shopName, eventData) => {
 
   const messages = users.map(u => ({
     to: u.pushToken,
-    title: `Nuovo evento da ${shopName}`,
-    body: eventData.name,
-    data: { shopId: shopId.toString() }
+    title: pushTitle,
+    body: pushBody,
+    data: { shopId: shopId.toString(), type }
   }));
 
   try {

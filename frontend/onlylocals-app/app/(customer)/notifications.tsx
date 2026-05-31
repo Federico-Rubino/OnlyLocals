@@ -58,39 +58,51 @@ export default function NotificationsScreen() {
     router.push(`/(customer)/shop/${item.shopId}`);
   };
 
-  const renderItem = ({ item }: { item: AppNotification }) => (
-    <TouchableOpacity
-      style={[styles.card, !item.read && styles.cardUnread]}
-      onPress={() => handlePress(item)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.iconWrap}>
-        <Ionicons
-          name="calendar-outline"
-          size={22}
-          color={item.read ? '#aaa' : '#255cb3'}
-        />
-        {!item.read && <View style={styles.dot} />}
-      </View>
-      <View style={styles.textWrap}>
-        <Text style={styles.shopName}>{item.shopName}</Text>
-        <Text style={styles.eventName}>{item.eventName}</Text>
-        {item.eventDescription ? (
-          <Text style={styles.eventDesc} numberOfLines={2}>
-            {item.eventDescription}
-          </Text>
-        ) : null}
-        <View style={styles.metaRow}>
-          {item.eventDate ? (
-            <Text style={styles.eventDate}>
-              <Ionicons name="time-outline" size={11} /> {formatDate(item.eventDate)}
-            </Text>
-          ) : null}
-          <Text style={styles.sentAt}>{formatDate(item.sentAt)}</Text>
+  const renderItem = ({ item }: { item: AppNotification }) => {
+    const isPromotion = item.type === 'promotion';
+    const iconName = isPromotion ? 'pricetag-outline' : 'calendar-outline';
+    const accentColor = isPromotion ? '#e65100' : '#255cb3';
+    const title = isPromotion ? item.promotionDescription : item.eventName;
+    const subtitle = isPromotion
+      ? item.promotionValue
+      : item.eventDescription;
+    const dateLabel = isPromotion
+      ? item.promotionStartDate
+        ? `Dal ${formatDate(item.promotionStartDate)}${item.promotionEndDate ? ` al ${formatDate(item.promotionEndDate)}` : ''}`
+        : null
+      : item.eventDate
+        ? formatDate(item.eventDate)
+        : null;
+
+    return (
+      <TouchableOpacity
+        style={[styles.card, !item.read && styles.cardUnread, isPromotion && !item.read && styles.cardUnreadPromo]}
+        onPress={() => handlePress(item)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.iconWrap}>
+          <Ionicons name={iconName as any} size={22} color={item.read ? '#aaa' : accentColor} />
+          {!item.read && <View style={[styles.dot, isPromotion && styles.dotPromo]} />}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.textWrap}>
+          <View style={styles.labelRow}>
+            <Text style={[styles.typeLabel, isPromotion && styles.typeLabelPromo]}>
+              {isPromotion ? 'PROMOZIONE' : 'EVENTO'}
+            </Text>
+            <Text style={styles.shopName}>{item.shopName}</Text>
+          </View>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle ? (
+            <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text>
+          ) : null}
+          <View style={styles.metaRow}>
+            {dateLabel ? <Text style={styles.dateLabel}>{dateLabel}</Text> : <View />}
+            <Text style={styles.sentAt}>{formatDate(item.sentAt)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -116,7 +128,7 @@ export default function NotificationsScreen() {
           <Ionicons name="notifications-off-outline" size={56} color="#ccc" />
           <Text style={styles.emptyText}>Nessuna notifica.</Text>
           <Text style={styles.emptySubText}>
-            Quando un negozio preferito aggiunge un evento, lo vedrai qui.
+            Quando un negozio preferito aggiunge un evento o una promozione, lo vedrai qui.
           </Text>
         </View>
       ) : (
@@ -161,6 +173,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardUnread: { borderLeftWidth: 3, borderLeftColor: '#255cb3' },
+  cardUnreadPromo: { borderLeftColor: '#e65100' },
   iconWrap: { marginRight: 12, alignItems: 'center', position: 'relative' },
   dot: {
     position: 'absolute',
@@ -169,14 +182,18 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#e53935',
+    backgroundColor: '#255cb3',
   },
+  dotPromo: { backgroundColor: '#e65100' },
   textWrap: { flex: 1 },
-  shopName: { fontSize: 13, color: '#255cb3', fontWeight: '600', marginBottom: 2 },
-  eventName: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
-  eventDesc: { fontSize: 13, color: '#555', marginBottom: 6 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  typeLabel: { fontSize: 10, fontWeight: '700', color: '#255cb3', letterSpacing: 0.5 },
+  typeLabelPromo: { color: '#e65100' },
+  shopName: { fontSize: 12, color: '#888', fontWeight: '500' },
+  title: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
+  subtitle: { fontSize: 13, color: '#555', marginBottom: 6 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  eventDate: { fontSize: 11, color: '#888' },
+  dateLabel: { fontSize: 11, color: '#888' },
   sentAt: { fontSize: 11, color: '#bbb' },
   emptyText: { fontSize: 17, fontWeight: '600', color: '#888', marginTop: 16 },
   emptySubText: { fontSize: 13, color: '#aaa', marginTop: 6, textAlign: 'center' },
