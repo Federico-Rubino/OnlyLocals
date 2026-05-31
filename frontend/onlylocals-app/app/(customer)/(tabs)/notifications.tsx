@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,6 +21,7 @@ function formatDate(dateStr: string | undefined): string | null {
 }
 
 export default function NotificationsScreen() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,6 +39,11 @@ export default function NotificationsScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const interval = setInterval(load, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -106,11 +113,16 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={26} color="#255cb3" />
+        </TouchableOpacity>
         <Text style={styles.title}>Notifiche</Text>
-        {unreadCount > 0 && (
+        {unreadCount > 0 ? (
           <TouchableOpacity onPress={handleMarkAllAsRead}>
             <Text style={styles.markAllText}>Segna tutte come lette</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={{ width: 90 }} />
         )}
       </View>
 
@@ -141,6 +153,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container:       { flex: 1, backgroundColor: '#f5f7fa' },
   header:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12 },
+  backBtn:         { width: 36, alignItems: 'flex-start' },
   title:           { fontSize: 26, fontWeight: '700', color: '#1a2a4a' },
   markAllText:     { fontSize: 13, color: '#255cb3', fontWeight: '500' },
   item:            { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 10, borderRadius: 14, padding: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.08)' },
