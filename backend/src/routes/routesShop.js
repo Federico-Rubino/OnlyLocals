@@ -206,7 +206,6 @@ router.get('/search', shopController.searchShops);
  */
 router.get('/stats', authMiddleware.autenticateToken, shopController.getStatistiche);
 
-
 /**
  * @openapi
  * /api/shops/{id}:
@@ -451,6 +450,238 @@ router.post('/event', authMiddleware.autenticateToken, shopController.addEvent);
  *         description: Server error
  */
 router.delete('/event', authMiddleware.autenticateToken, shopController.deleteEvent);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/scan:
+ *   post:
+ *     summary: Scan fidelity card
+ *     description: Scan a customer fidelity card and add 1 point
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *     responses:
+ *       200:
+ *         description: Punto aggiunto
+ *       404:
+ *         description: Fidelity card not found
+ *       403:
+ *         description: Not a vendor
+ */
+router.post('/fidelity/scan', authMiddleware.autenticateToken, shopController.scanFidelityCard);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/vantaggi:
+ *   put:
+ *     summary: Set fidelity vantaggi
+ *     description: Set fidelity vantaggi for the shop (max once every 3 months)
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               vantaggi:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     descrizione:
+ *                       type: string
+ *                     valore:
+ *                       type: number
+ *                     sogliaPunti:
+ *                       type: integer
+ *     responses:
+ *       200:
+ *         description: Vantaggi aggiornati
+ *       403:
+ *         description: Non modificabile
+ */
+router.put('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController.setVantaggi);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/vantaggi:
+ *   get:
+ *     summary: Get fidelity vantaggi
+ *     description: Returns the fidelity vantaggi of the vendor's shop
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista vantaggi
+ */
+router.get('/fidelity/vantaggi', authMiddleware.autenticateToken, shopController.getVantaggi);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/scan/addPoints:
+ *   post:
+ *     summary: Scan card and add points
+ *     description: Scan customer fidelity card and add points based on purchase amount
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *               - importo
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *               importo:
+ *                 type: number
+ *                 example: 50
+ *     responses:
+ *       200:
+ *         description: Punti aggiunti
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.post('/fidelity/scan/addPoints', authMiddleware.autenticateToken, shopController.addPoints);
+
+/**
+ * @openapi
+ * /api/shops/fidelity/scan/redeem:
+ *   post:
+ *     summary: Redeem a vantaggio
+ *     description: Vendor scans customer card and redeems a vantaggio
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *               - descrizioneVantaggio
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: "64abc123..."
+ *               descrizioneVantaggio:
+ *                 type: string
+ *                 example: "Sconto 10%"
+ *     responses:
+ *       200:
+ *         description: Vantaggio riscattato
+ *       400:
+ *         description: Not enough points
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.post('/fidelity/scan/redeem', authMiddleware.autenticateToken, shopController.redeemVantaggio);
+
+
+/**
+ * @openapi
+ * /api/shops/fidelity/modifyConversion:
+ *   put:
+ *     summary: Modify conversion rate
+ *     description: Set how many euros correspond to 1 point
+ *     tags:
+ *       - Shops
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tasso
+ *             properties:
+ *               tasso:
+ *                 type: number
+ *                 example: 10
+ *                 description: "Euros needed for 1 point (es. 10 = 10€ = 1 punto)"
+ *     responses:
+ *       200:
+ *         description: Tasso aggiornato
+ *       403:
+ *         description: Not a vendor
+ */
+router.put('/fidelity/modifyConversion', authMiddleware.autenticateToken, shopController.modifyConversion);
+
+/**
+ * @openapi
+ * /api/shops/{id}:
+ *   get:
+ *     summary: Get a single shop by ID
+ *     description: Returns all info of a specific commercial activity
+ *     tags:
+ *       - Shops
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Shop ID
+ *     responses:
+ *       200:
+ *         description: Shop details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     itinerario:
+ *                       type: object
+ *                     events:
+ *                       type: array
+ *                     promotions:
+ *                       type: array                 
+ *       404:
+ *         description: Shop not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id', shopController.getShopById);
+
 
 
 /**
