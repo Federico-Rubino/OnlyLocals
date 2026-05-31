@@ -46,3 +46,24 @@ export const updateShop = async (data: {
   await apiClient.put('/shops/update', data);
 };
 
+export interface AccessoEntry {
+  data: string;
+  valore: number;
+}
+
+export interface StatisticheData {
+  nomeShop: string;
+  statistiche: {
+    numSalvataggi: number;
+    votoMedio: number;
+    totalFeedback: number;
+    mappaAccessi: AccessoEntry[];
+    ultimoAggiornamento: string;
+  } | string;
+}
+
+export const getStatistiche = async (): Promise<StatisticheData> => {
+  const response = await apiClient.get<{ success: boolean; data: StatisticheData }>('/shops/stats');
+  return response.data.data;
+};
+
