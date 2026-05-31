@@ -121,10 +121,17 @@ exports.addEvent = async (req, res) => {
             });
         }
 
-        res.status(500).json({ 
-            success: false, 
-            message: "Error adding event to shop", 
-            error: err.message 
+        if (err.name === "DuplicateEvent") {
+            return res.status(409).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Error adding event to shop",
+            error: err.message
         });
     }
 }
