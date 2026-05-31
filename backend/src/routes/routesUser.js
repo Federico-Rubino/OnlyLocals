@@ -580,6 +580,41 @@ router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.s
  */
 router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
 
+/**
+ * @openapi
+ * /api/users/fidelity/points:
+ *   get:
+ *     summary: Get fidelity points
+ *     description: Returns the fidelity points of the authenticated user
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Points list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       activity:
+ *                         type: string
+ *                       count:
+ *                         type: integer
+ *       404:
+ *         description: Fidelity card not found
+ */
+router.get('/fidelity/points', authMiddleware.autenticateToken, userController.getPoints);
+
+
 router.patch('/pushToken', authMiddleware.autenticateToken, userController.savePushToken);
 
 router.get('/notifications', authMiddleware.autenticateToken, userController.getNotifications);

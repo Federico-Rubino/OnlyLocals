@@ -6,7 +6,7 @@ const FidelityPointSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  points: {
+  count: {
     type: Number,
     required: true,
     min: 0
