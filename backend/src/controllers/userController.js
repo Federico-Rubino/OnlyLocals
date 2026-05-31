@@ -239,3 +239,41 @@ exports.updatePersonalData = async (req, res) => {
       res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
+exports.getPoints = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const points = await userService.getPoints(userId);
+
+        res.status(200).json({
+            success: true,
+            data: points
+        });
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+
+
+exports.getUserData = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const user = await userService.getUserData(userId);
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+
+    } catch (err) {
+        if (err.message === "User not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
