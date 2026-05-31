@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,30 +24,43 @@ export default function FavoritesScreen() {
   const router = useRouter();
   const [shops, setShops] = useState<FavoriteShop[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const fetchData = useCallback(async () => {
-    try {
-      setError(null);
-      const [shopsRes, notifications] = await Promise.all([
-        apiClient.get('/users/favorites'),
-        getNotifications(),
-      ]);
-      setShops(shopsRes.data.data ?? []);
-      setUnreadCount(notifications.filter(n => !n.read).length);
-    } catch {
-      setError('Errore nel caricamento dei preferiti.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      const load = async () => {
+        setLoading(true);
+        setErrorMsg('');
+        try {
+          const res = await apiClient.get('/users/favorites');
+          if (active) setShops(res.data.data ?? []);
+        } catch (err: any) {
+          if (active) {
+            const msg =
+              err?.response?.data?.message ?? err?.message ?? 'Errore sconosciuto';
+            setErrorMsg(msg);
+          }
+        } finally {
+          if (active) setLoading(false);
+        }
 
-  const removeFromFavorites = async (shopId: string) => {
+        try {
+          const notifs = await getNotifications();
+          if (active) setUnreadCount(notifs.filter((n: any) => !n.read).length);
+        } catch {
+          // non-critical
+        }
+      };
+
+      load();
+      return () => { active = false; };
+    }, [])
+  );
+
+  const removeShop = async (shopId: string) => {
     try {
       await apiClient.delete('/users/favorites', { data: { shopId } });
       setShops(prev => prev.filter(s => s._id !== shopId));
@@ -55,34 +69,10 @@ export default function FavoritesScreen() {
     }
   };
 
-  const renderShop = ({ item }: { item: FavoriteShop }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/(customer)/shop/${item._id}`)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardContent}>
-        <Text style={styles.shopName}>{item.name}</Text>
-        <Text style={styles.shopCategory}>{item.category.join(', ')}</Text>
-        {item.description ? (
-          <Text style={styles.shopDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-        ) : null}
-      </View>
-      <TouchableOpacity
-        style={styles.removeBtn}
-        onPress={() => removeFromFavorites(item._id)}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="heart" size={24} color="#e53935" />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      {/* Header */}
+
+      {/* ── HEADER WITH BELL ── */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Preferiti</Text>
         <TouchableOpacity
@@ -101,38 +91,76 @@ export default function FavoritesScreen() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <ActivityIndicator style={styles.center} size="large" color="#255cb3" />
-      ) : error ? (
+      {/* ── BODY ── */}
+      {loading && (
         <View style={styles.center}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={fetchData} style={styles.retryBtn}>
-            <Text style={styles.retryText}>Riprova</Text>
-          </TouchableOpacity>
+          <ActivityIndicator size="large" color="#255cb3" />
         </View>
-      ) : shops.length === 0 ? (
+      )}
+
+      {!loading && errorMsg !== '' && (
+        <View style={styles.center}>
+          <Ionicons name="alert-circle-outline" size={48} color="#e53935" />
+          <Text style={styles.errorText}>{errorMsg}</Text>
+        </View>
+      )}
+
+      {!loading && errorMsg === '' && shops.length === 0 && (
         <View style={styles.center}>
           <Ionicons name="heart-outline" size={56} color="#ccc" />
-          <Text style={styles.emptyText}>Nessun preferito ancora.</Text>
-          <Text style={styles.emptySubText}>
-            Salva un negozio dalla mappa per vederlo qui.
+          <Text style={styles.emptyTitle}>Nessun preferito</Text>
+          <Text style={styles.emptySub}>
+            Aggiungi un negozio dalla mappa per vederlo qui.
           </Text>
         </View>
-      ) : (
+      )}
+
+      {!loading && errorMsg === '' && shops.length > 0 && (
         <FlatList
           data={shops}
           keyExtractor={item => item._id}
-          renderItem={renderShop}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.8}
+              onPress={() => router.push(`/(customer)/shop/${item._id}`)}
+            >
+              <View style={styles.info}>
+                <Text style={styles.shopName}>{item.name}</Text>
+                <View style={styles.tagRow}>
+                  {item.category.map(cat => (
+                    <View key={cat} style={styles.tag}>
+                      <Text style={styles.tagText}>{cat}</Text>
+                    </View>
+                  ))}
+                </View>
+                {!!item.description && (
+                  <Text style={styles.desc} numberOfLines={2}>
+                    {item.description}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => removeShop(item._id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="heart" size={24} color="#e53935" />
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
         />
       )}
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f7fa' },
+
+  // header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -159,7 +187,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+
+  // states
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  errorText: { fontSize: 14, color: '#e53935', textAlign: 'center', marginTop: 12 },
+  emptyTitle: { fontSize: 17, fontWeight: '600', color: '#888', marginTop: 16 },
+  emptySub: { fontSize: 13, color: '#aaa', marginTop: 6, textAlign: 'center' },
+
+  // list
   list: { padding: 16, gap: 12 },
   card: {
     flexDirection: 'row',
@@ -173,14 +208,15 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardContent: { flex: 1 },
-  shopName: { fontSize: 16, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
-  shopCategory: { fontSize: 13, color: '#255cb3', fontWeight: '500', marginBottom: 4 },
-  shopDescription: { fontSize: 13, color: '#666' },
-  removeBtn: { marginLeft: 12, padding: 4 },
-  emptyText: { fontSize: 17, fontWeight: '600', color: '#888', marginTop: 16 },
-  emptySubText: { fontSize: 13, color: '#aaa', marginTop: 6, textAlign: 'center' },
-  errorText: { fontSize: 15, color: '#e53935', textAlign: 'center', marginBottom: 12 },
-  retryBtn: { backgroundColor: '#255cb3', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10 },
-  retryText: { color: '#fff', fontWeight: '600' },
+  info: { flex: 1, marginRight: 12 },
+  shopName: { fontSize: 16, fontWeight: '700', color: '#1a1a1a', marginBottom: 6 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 },
+  tag: {
+    backgroundColor: '#e8f0fd',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  tagText: { fontSize: 12, color: '#255cb3', fontWeight: '500' },
+  desc: { fontSize: 13, color: '#666' },
 });

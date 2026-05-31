@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { tokenService } from './auth/tokenService';
 
+let sessionExpiredCallback: (() => void) | null = null;
+
+export function setSessionExpiredCallback(callback: () => void) {
+  sessionExpiredCallback = callback;
+}
+
 const apiClient = axios.create({
   baseURL: 'https://onlylocals.onrender.com/api',
   headers: {
@@ -40,8 +46,8 @@ apiClient.interceptors.response.use(
         const refreshToken = await tokenService.getRefreshToken();
         
         if (!refreshToken) {
-          //if not refresh token user not logged
           await tokenService.clearTokens();
+          sessionExpiredCallback?.();
           return Promise.reject(error);
         }
         const response = await axios.post(`${apiClient.defaults.baseURL}/users/refreshToken`, {
@@ -57,10 +63,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
 
       } catch (refreshError) {
-        //If refresh token not working delete all token
-        console.error("Refresh token expired, clearing session.");
         await tokenService.clearTokens();
-        //add event to relogin the user
+        sessionExpiredCallback?.();
         return Promise.reject(refreshError);
       }
     }
