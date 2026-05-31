@@ -184,6 +184,32 @@ exports.setAsCustomer = async (userId) => {
   return user.role;
 }
 
+exports.getFavoritesWithDetails = async (userId) => {
+  const user = await User.findById(userId, 'savedShops').populate('savedShops', 'name category description');
+  if (!user) throw new Error('User not found');
+  return user.savedShops;
+};
+
+exports.savePushToken = async (userId, token) => {
+  await User.findByIdAndUpdate(userId, { pushToken: token });
+};
+
+exports.getNotifications = async (userId) => {
+  const user = await User.findById(userId, 'notifications');
+  if (!user) throw new Error('User not found');
+  const sorted = [...user.notifications].sort(
+    (a, b) => new Date(b.sentAt) - new Date(a.sentAt)
+  );
+  return sorted;
+};
+
+exports.markNotificationRead = async (userId, notificationId) => {
+  await User.updateOne(
+    { _id: userId, 'notifications._id': notificationId },
+    { $set: { 'notifications.$.read': true } }
+  );
+};
+
 exports.updatePersonalData = async (userId, newInfo) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");

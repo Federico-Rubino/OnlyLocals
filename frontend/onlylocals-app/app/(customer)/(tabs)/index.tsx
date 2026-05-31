@@ -1,5 +1,6 @@
 import Mapbox from '@rnmapbox/maps';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import SearchBar from '../../../components/SearchBar';
@@ -11,6 +12,7 @@ import { getCurrentDayKey, getCurrentSlotKey } from '../../../utils/getCurrentSl
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
 const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
+
 
 const extractCurrentMarker = (
   shop: SearchResult
@@ -47,6 +49,7 @@ const HomeScreen = () => {
   const [userCoordinate, setUserCoordinate] = useState<[number, number] | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
+  const router = useRouter();
   // Request location permission and fly to user position on mount
   useEffect(() => {
     (async () => {
@@ -97,7 +100,7 @@ const HomeScreen = () => {
 };
 
   const handleShopPress = (shop: SearchResult) => {
-    // TODO: navigate to shop detail screen
+    router.push(`../../shop/${shop._id}`);
     console.log('Navigate to shop:', shop._id);
   };
 

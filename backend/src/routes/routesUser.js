@@ -215,11 +215,17 @@ router.post('/refreshToken', userController.refreshToken);
  */
 router.post('/logout', userController.logout);
 
+router.get('/favorites', authMiddleware.autenticateToken, userController.getFavorites);
 router.post('/favorites', authMiddleware.autenticateToken, userController.addShopToFavorites);
-
 router.delete('/favorites', authMiddleware.autenticateToken, userController.removeShopFromFavorites);
 
 router.patch('/setAsCustomer', authMiddleware.autenticateToken, userController.setAsCustomer);
 
 router.patch('/profile', authMiddleware.autenticateToken, userController.updatePersonalData);
+
+router.patch('/pushToken', authMiddleware.autenticateToken, userController.savePushToken);
+
+router.get('/notifications', authMiddleware.autenticateToken, userController.getNotifications);
+router.patch('/notifications/:notificationId/read', authMiddleware.autenticateToken, userController.markNotificationRead);
+
 module.exports = router;

@@ -1,50 +1,69 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// context/AuthContext.tsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
 
-interface AuthContextType {
+type AuthContextType = {
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (credentials: any) => Promise<void>;
+  role: string | null;
+  shopId: string | null;
+  login: (credentials: { identifier: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
-}
+  updateRole: (newRole: string) => Promise<void>;
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+  const [shopId, setShopId] = useState<string | null>(null);
 
-  // Check if tokens exist on app startup
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkToken = async () => {
       const token = await tokenService.getAccessToken();
+      const savedRole = await tokenService.getRole();
+      const savedShopId = await tokenService.getShopId();
       setIsLoggedIn(!!token);
+      setRole(savedRole);
+      setShopId(savedShopId);
       setIsLoading(false);
     };
-    checkAuth();
+    checkToken();
   }, []);
 
-  const login = async (credentials: any) => {
-    const success = await authService.login(credentials);
-    if (success) setIsLoggedIn(true);
+  const login = async (credentials: { identifier: string; password: string }) => {
+    const { role: newRole, shopId: newShopId } = await authService.login(credentials);
+    await tokenService.setRole(newRole);
+    await tokenService.setShopId(newShopId);
+    setIsLoggedIn(true);
+    setRole(newRole);
+    setShopId(newShopId);
   };
 
   const logout = async () => {
     await authService.logout();
     setIsLoggedIn(false);
+    setRole(null);
+    setShopId(null);
+  };
+
+  const updateRole = async (newRole: string) => {
+    await tokenService.setRole(newRole);
+    setRole(newRole);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-// Hook to use the auth state anywhere
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-};
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
+}

@@ -12,6 +12,7 @@ const apiClient = axios.create({
 //request interceptor to add authentication token
 apiClient.interceptors.request.use(
   async (config) => {
+
     const token = await tokenService.getAccessToken();
   
     if (token) {
@@ -24,7 +25,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 3.response interceptor to distinguish publig api from one with login
+// response interceptor to distinguish public api from one with login
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -33,7 +34,7 @@ apiClient.interceptors.response.use(
     // Save original request
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const refreshToken = await tokenService.getRefreshToken();
@@ -57,7 +58,7 @@ apiClient.interceptors.response.use(
 
       } catch (refreshError) {
         //If refresh token not working delete all token
-        console.error("Refresh token ");
+        console.error("Refresh token expired, clearing session.");
         await tokenService.clearTokens();
         //add event to relogin the user
         return Promise.reject(refreshError);

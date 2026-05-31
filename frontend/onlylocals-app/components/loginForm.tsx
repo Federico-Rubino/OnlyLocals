@@ -1,7 +1,5 @@
 import React from 'react';
-import { Button, StyleSheet, TextInput, View } from 'react-native';
-
-
+import { StyleSheet, TextInput, TouchableOpacity, Text, View, ActivityIndicator } from 'react-native';
 
 interface LoginFormProps {
   identifier: string;
@@ -21,6 +19,8 @@ export default function LoginForm({
   isLoading 
 }: LoginFormProps) {
   
+  const isDisabled = isLoading || identifier.trim() === '' || password.trim() === '';
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -38,19 +38,22 @@ export default function LoginForm({
         onChangeText={onPasswordChange}
         autoCapitalize="none"
         autoCorrect={false}
-        //secureTextEntry={true}
+        secureTextEntry={true}
       />
-      <View style={styles.buttonContainer}>
-        <Button 
-          title={isLoading ? "Login in corso" : "Login"} 
-          onPress={onLogin} 
-          disabled={isLoading || identifier.trim() === '' || password.trim() === ''} 
-        />
-      </View>
+      <TouchableOpacity
+        style={[styles.button, isDisabled && styles.buttonDisabled]}
+        onPress={onLogin}
+        disabled={isDisabled}
+        activeOpacity={0.8}
+      >
+        {isLoading 
+          ? <ActivityIndicator color="#fff" /> 
+          : <Text style={styles.buttonText}>Login</Text>
+        }
+      </TouchableOpacity>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -70,9 +73,20 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  buttonContainer: {
+  button: {
     width: '100%',
+    height: 50,
+    backgroundColor: '#007bff',
     borderRadius: 8,
-    overflow: 'hidden', //for ios button
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#a0c4ff',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
