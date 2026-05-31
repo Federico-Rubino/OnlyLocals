@@ -1,8 +1,18 @@
 // app/_layout.tsx
 import { AuthProvider, useAuth} from '../context/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+
+const TEST_USER = {
+  isLoggedIn: true, 
+  role: 'vendor'  
+};
+
+export const ThemeContext = createContext({
+  theme: 'light' as 'light' | 'dark',
+  setTheme: (t: 'light' | 'dark') => {},
+});
 
 function DebugLogoutButton() {
   const { logout } = useAuth();
@@ -21,6 +31,8 @@ function RootNavigator() {
   const segments = useSegments();
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const { isLoggedIn, isLoading, role } = useAuth();
 
   useEffect(() => {
@@ -33,6 +45,7 @@ function RootNavigator() {
     const inAuthGroup     = segments[0] === '(auth)';
     const inCustomerGroup = segments[0] === '(customer)';
     const inVendorGroup   = segments[0] === '(vendor)';
+    const onRoleSelection = inAuthGroup && segments[1] === 'role-selection';
 
     // 1. Guest → browse as customer
     if (!isLoggedIn && !inCustomerGroup && !inAuthGroup) {
@@ -42,14 +55,20 @@ function RootNavigator() {
 
     if (!isLoggedIn) return;
 
-    // 2. Vendor → vendor area
+    // 2. Pending → must complete role selection
+    if (role === 'pending') {
+      if (!onRoleSelection) router.replace('/(auth)/role-selection');
+      return;
+    }
+
+    // 3. Vendor → vendor area
     if (role === 'vendor' && !inVendorGroup) {
       router.replace('/(vendor)/(tabs)');
       return;
     }
 
-    // 3. Customer or Pending → customer area, block auth pages
-    if ((role === 'customer' || role === 'pending') && inAuthGroup) {
+    // 4. Customer → customer area, block auth pages
+    if (role === 'customer' && inAuthGroup) {
       router.replace('/(customer)/(tabs)');
       return;
     }
@@ -57,15 +76,18 @@ function RootNavigator() {
   }, [isReady, segments, isLoggedIn, isLoading, role]);
 
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <Stack 
+        screenOptions={{ 
+          headerShown: false,
+          contentStyle: { backgroundColor: theme === 'dark' ? '#121212' : '#f5f7fa' } 
+        }}
+      >
         <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)"     options={{ headerShown: false }} />
-        <Stack.Screen name="(vendor)"   options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(vendor)" options={{ headerShown: false }} />
       </Stack>
-
-      <DebugLogoutButton />
-    </>
+    </ThemeContext.Provider>
   );
 }
 
