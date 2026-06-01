@@ -12,7 +12,9 @@ const PositionSchema = new mongoose.Schema({
       required: true
     }
   },
-  indirizzo: String
+  indirizzo: String,
+  oraInizio: String, // orario di apertura della fascia, formato "HH:MM"
+  oraFine: String    // orario di chiusura della fascia, formato "HH:MM"
 }, { _id: false });
 
 const DaySchema = new mongoose.Schema({
@@ -36,7 +38,6 @@ const PromotionSchema = new mongoose.Schema({
 
 const VantaggioSchema = new mongoose.Schema({
   descrizione: String,
-  valore: Number,
   sogliaPunti: Number
 }, { _id: false });
 
