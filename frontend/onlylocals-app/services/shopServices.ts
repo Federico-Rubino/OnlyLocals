@@ -101,7 +101,6 @@ export const registerShop = async (data: {
 
 export type Vantaggio = {
   descrizione: string;
-  valore: number;
   sogliaPunti: number;
 };
 

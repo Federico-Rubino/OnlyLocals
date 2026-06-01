@@ -56,11 +56,12 @@ exports.getShopById = async (req, res) =>{
                 itinerario: shop.itinerario,
                 events: shop.events,
                 promotions: shop.promotions,
-                statistiche: {                             
+                statistiche: {
                 votoMedio: shop.statistiche?.votoMedio,
                 totaleFeedback: shop.statistiche?.totaleFeedback,
                 storicoFeedback: shop.statistiche?.storicoFeedback || []
-                }
+                },
+                ...(skipCount && { fidelityCardManager: shop.fidelityCardManager }),
             }
         });
     }catch (err){

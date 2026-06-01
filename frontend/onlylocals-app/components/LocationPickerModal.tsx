@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import Mapbox from '@rnmapbox/maps';
+import Mapbox, { Logger } from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -8,6 +8,13 @@ import {
 } from 'react-native';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
+
+// Suppress the non-fatal native race: ViewTagResolver fires when the map view
+// is released by RN while Mapbox still holds its tag internally (modal close timing).
+Logger.setLogCallback(log => {
+  if (log.message?.match(/ViewTagResolver|view: \d+ but is null/)) return true;
+  return false;
+});
 
 const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
 
@@ -44,6 +51,7 @@ export default function LocationPickerModal({
   useEffect(() => {
     if (!visible) {
       pendingInitRef.current = null;
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       return;
     }
     setQuery('');

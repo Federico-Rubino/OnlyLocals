@@ -38,7 +38,6 @@ const PromotionSchema = new mongoose.Schema({
 
 const VantaggioSchema = new mongoose.Schema({
   descrizione: String,
-  valore: Number,
   sogliaPunti: Number
 }, { _id: false });
 

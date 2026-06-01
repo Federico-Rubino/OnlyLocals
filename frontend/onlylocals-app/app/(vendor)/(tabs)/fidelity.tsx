@@ -66,7 +66,7 @@ export default function FidelityScreen() {
   };
 
   const addVantaggio = () => {
-    setEditVantaggi(prev => [...prev, { descrizione: '', valore: 0, sogliaPunti: 0 }]);
+    setEditVantaggi(prev => [...prev, { descrizione: '', sogliaPunti: 0 }]);
   };
 
   const removeVantaggio = (index: number) => {
@@ -116,7 +116,7 @@ export default function FidelityScreen() {
     setLoading(true);
     try {
       await modifyConversion(t);
-      setFidelityManager(prev => (prev ? { ...prev, tassoConversione: t } : prev));
+      setFidelityManager(prev => ({ modo: 'visita', ...prev, tassoConversione: t }));
       setTassoModalVisible(false);
       Alert.alert('Successo', 'Tasso di conversione aggiornato!');
     } catch (err: any) {
@@ -128,7 +128,6 @@ export default function FidelityScreen() {
 
   if (loadingData) return <ActivityIndicator style={{ flex: 1 }} />;
 
-  const isAcquisto = fidelityManager?.modo === 'acquisto';
   const canEditNote = fidelityManager?.ultimaModifica
     ? `Ultima modifica: ${new Date(fidelityManager.ultimaModifica).toLocaleDateString('it-IT')}. Modificabile ogni 3 mesi.`
     : 'I premi possono essere modificati ogni 3 mesi.';
@@ -142,33 +141,23 @@ export default function FidelityScreen() {
       <StatusBar barStyle="dark-content" />
       <Text style={styles.pageTitle}>Fidelity Card</Text>
 
-      {/* Modalità */}
+      {/* Tasso di conversione */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Modalità raccolta punti</Text>
-        <View style={styles.modeRow}>
-          <Ionicons
-            name={isAcquisto ? 'card-outline' : 'footsteps-outline'}
-            size={20}
-            color="#1a2a4a"
-          />
-          <Text style={styles.modeText}>
-            {isAcquisto ? 'Acquisto — punti per importo speso' : 'Visita — 1 punto per visita'}
-          </Text>
-        </View>
-        {isAcquisto && (
-          <View style={styles.tassoRow}>
+        <Text style={styles.cardTitle}>Tasso di conversione</Text>
+        <View style={styles.tassoRow}>
+          <Ionicons name="cash-outline" size={20} color="#1a2a4a" />
+          {fidelityManager?.tassoConversione ? (
             <Text style={styles.tassoLabel}>
-              Tasso:{' '}
-              <Text style={styles.tassoValue}>
-                {fidelityManager?.tassoConversione ?? '—'} €
-              </Text>{' '}
-              = 1 punto
+              <Text style={styles.tassoValue}>{fidelityManager.tassoConversione} €</Text>
+              {' '}= 1 punto
             </Text>
-            <TouchableOpacity style={styles.inlineEditBtn} onPress={openEditTasso}>
-              <Ionicons name="pencil-outline" size={16} color="#888" />
-            </TouchableOpacity>
-          </View>
-        )}
+          ) : (
+            <Text style={styles.tassoLabel}>Non configurato</Text>
+          )}
+          <TouchableOpacity style={styles.inlineEditBtn} onPress={openEditTasso}>
+            <Ionicons name="pencil-outline" size={16} color="#888" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Premi */}
@@ -183,10 +172,10 @@ export default function FidelityScreen() {
               <View key={i} style={styles.vantaggioRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.vantaggioDesc}>{v.descrizione}</Text>
-                  <Text style={styles.vantaggioMeta}>Valore: {v.valore}</Text>
                 </View>
                 <View style={styles.puntiBadge}>
                   <Text style={styles.puntiBadgeText}>{v.sogliaPunti} pt</Text>
+                  <Text style={styles.puntiBadgeSub}>richiesti</Text>
                 </View>
               </View>
             ))}
@@ -233,27 +222,15 @@ export default function FidelityScreen() {
                     onChangeText={val => updateVantaggio(i, 'descrizione', val)}
                   />
                 </View>
-                <View style={styles.fieldRow}>
-                  <View style={[styles.field, { flex: 1 }]}>
-                    <Text style={styles.fieldLabel}>Valore</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="es. 10"
-                      value={v.valore === 0 ? '' : String(v.valore)}
-                      onChangeText={val => updateVantaggio(i, 'valore', val)}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={[styles.field, { flex: 1 }]}>
-                    <Text style={styles.fieldLabel}>Soglia punti</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="es. 5"
-                      value={v.sogliaPunti === 0 ? '' : String(v.sogliaPunti)}
-                      onChangeText={val => updateVantaggio(i, 'sogliaPunti', val)}
-                      keyboardType="numeric"
-                    />
-                  </View>
+                <View style={[styles.field]}>
+                  <Text style={styles.fieldLabel}>Punti richiesti</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="es. 50"
+                    value={v.sogliaPunti === 0 ? '' : String(v.sogliaPunti)}
+                    onChangeText={val => updateVantaggio(i, 'sogliaPunti', val)}
+                    keyboardType="numeric"
+                  />
                 </View>
               </View>
             ))}
@@ -316,9 +293,7 @@ const styles = StyleSheet.create({
   pageTitle:           { fontSize: 26, fontWeight: '700', color: '#1a2a4a', letterSpacing: -0.3, marginBottom: 20 },
   card:                { backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.10)', padding: 14, paddingRight: 48, marginBottom: 12 },
   cardTitle:           { fontSize: 16, fontWeight: '600', color: '#1a1a1a', marginBottom: 8 },
-  modeRow:             { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  modeText:            { fontSize: 14, color: '#1a2a4a', fontWeight: '500' },
-  tassoRow:            { flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 },
+  tassoRow:            { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tassoLabel:          { fontSize: 13, color: '#6b6b6b' },
   tassoValue:          { fontWeight: '600', color: '#1a2a4a' },
   inlineEditBtn:       { padding: 4 },
@@ -327,9 +302,9 @@ const styles = StyleSheet.create({
   vantaggiList:        { gap: 8 },
   vantaggioRow:        { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: 'rgba(0,0,0,0.07)' },
   vantaggioDesc:       { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
-  vantaggioMeta:       { fontSize: 12, color: '#6b6b6b', marginTop: 2 },
   puntiBadge:          { backgroundColor: '#e6f1fb', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   puntiBadgeText:      { fontSize: 12, fontWeight: '700', color: '#0c447c' },
+  puntiBadgeSub:       { fontSize: 9, color: '#0c447c', textAlign: 'center', marginTop: 1 },
   editBtn:             { position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   overlay:             { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet:               { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 22, gap: 12 },
@@ -339,7 +314,6 @@ const styles = StyleSheet.create({
   vantaggioEditCard:   { borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)', borderRadius: 12, padding: 12, gap: 10 },
   vantaggioEditHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   vantaggioEditNum:    { fontSize: 13, fontWeight: '600', color: '#1a2a4a' },
-  fieldRow:            { flexDirection: 'row', gap: 10 },
   field:               { gap: 4 },
   fieldLabel:          { fontSize: 12, color: '#6b6b6b' },
   input:               { borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.22)', borderRadius: 8, padding: 10, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fff' },
