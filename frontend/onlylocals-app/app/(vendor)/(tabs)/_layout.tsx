@@ -36,13 +36,12 @@ export default function VendorTabLayout() {
         name="stats"
         options={{
           title: 'Statistiche',
-          tabBarIcon: ({ color }) => <Ionicons name="time-outline" size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="bar-chart-outline" size={24} color={color} />,
         }}
       />
 
-
       <Tabs.Screen
-        name="profile"
+        name="profilo"
         options={{
           title: 'Profilo',
           tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,

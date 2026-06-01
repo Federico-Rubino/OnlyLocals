@@ -249,7 +249,7 @@ router.get('/stats', authMiddleware.autenticateToken, shopController.getStatisti
  *       500:
  *         description: Server error
  */
-router.get('/:id', shopController.getShopById);
+router.get('/:id', authMiddleware.optionalAuth, shopController.getShopById);
 
 /**
  * @openapi
@@ -680,7 +680,7 @@ router.put('/fidelity/modifyConversion', authMiddleware.autenticateToken, shopCo
  *       500:
  *         description: Server error
  */
-router.get('/:id', shopController.getShopById);
+router.get('/:id', authMiddleware.optionalAuth, shopController.getShopById);
 
 
 

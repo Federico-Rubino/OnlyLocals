@@ -12,6 +12,7 @@ type AuthContextType = {
   login: (credentials: { identifier: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateRole: (newRole: string) => Promise<void>;
+  updateShopId: (newShopId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -64,8 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRole(newRole);
   };
 
+  const updateShopId = async (newShopId: string) => {
+    await tokenService.setShopId(newShopId);
+    setShopId(newShopId);
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole, updateShopId }}>
       {children}
     </AuthContext.Provider>
   );

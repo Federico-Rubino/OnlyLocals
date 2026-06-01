@@ -40,8 +40,9 @@ export const deleteEvento = async (name: string): Promise<void> => {
 };
 
 export const updateShop = async (data: {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
+  itinerario?: Record<string, any>;
 }): Promise<void> => {
   await apiClient.put('/shops/update', data);
 };
@@ -73,5 +74,26 @@ export interface StatisticheData {
 export const getStatistiche = async (): Promise<StatisticheData> => {
   const response = await apiClient.get<{ success: boolean; data: StatisticheData }>('/shops/stats');
   return response.data.data;
+};
+
+export interface ItinerarioSlotPayload {
+  latitudine: number;
+  longitudine: number;
+  indirizzo?: string;
+}
+
+export type ItinerarioPayload = Record<
+  string,
+  Record<string, ItinerarioSlotPayload>
+>;
+
+export const registerShop = async (data: {
+  name: string;
+  description: string;
+  category: string[];
+  itinerario?: ItinerarioPayload;
+}): Promise<{ newRole: string; id: string }> => {
+  const response = await apiClient.post('/shops/register', data);
+  return response.data;
 };
 

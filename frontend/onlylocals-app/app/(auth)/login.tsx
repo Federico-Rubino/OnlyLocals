@@ -33,9 +33,13 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={() => router.replace('/(customer)/(tabs)')} style={styles.backBtn}>
+        <Text style={styles.backText}>← Torna alla home</Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>Login</Text>
 
-      <LoginForm 
+      <LoginForm
         identifier={identifier}
         password={password}
         onIdentifierChange={setIdentifier}
@@ -64,6 +68,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 56,
+    left: 20,
+  },
+  backText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   registerButton: {
     marginTop: 20,
