@@ -32,6 +32,7 @@ export default function LocationPickerModal({
   const cameraRef = useRef<Mapbox.Camera>(null);
   const centerRef = useRef<[number, number]>(initialCoordinate ?? MILAN_CENTER);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingInitRef = useRef<[number, number] | null>(null);
 
   const [address, setAddress] = useState('');
   const [resolving, setResolving] = useState(false);
@@ -41,23 +42,29 @@ export default function LocationPickerModal({
   const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      pendingInitRef.current = null;
+      return;
+    }
     setQuery('');
     setSearchError('');
     const init = initialCoordinate ?? MILAN_CENTER;
     centerRef.current = init;
-    const t = setTimeout(() => {
-      cameraRef.current?.setCamera({
-        centerCoordinate: init,
-        zoomLevel: 15,
-        animationMode: 'none',
-        animationDuration: 0,
-      });
-    }, 150);
+    pendingInitRef.current = init;
     reverseGeocode(init);
-    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  const handleMapReady = () => {
+    if (!pendingInitRef.current) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: pendingInitRef.current,
+      zoomLevel: 15,
+      animationMode: 'none',
+      animationDuration: 0,
+    });
+    pendingInitRef.current = null;
+  };
 
   const reverseGeocode = async (coord: [number, number]): Promise<string> => {
     const [lng, lat] = coord;
@@ -150,6 +157,7 @@ export default function LocationPickerModal({
           attributionEnabled={false}
           scaleBarEnabled={false}
           onCameraChanged={handleCameraChanged}
+          onDidFinishLoadingMap={handleMapReady}
         >
           <Mapbox.Camera
             ref={cameraRef}
