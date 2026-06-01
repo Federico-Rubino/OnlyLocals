@@ -1,6 +1,7 @@
-import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
-import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View,
+} from 'react-native';
 
 // 30-minute time options from 00:00 to 23:30.
 const TIME_OPTIONS: string[] = [];
@@ -10,10 +11,58 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
+const ROW_HEIGHT = 44;
+const LIST_HEIGHT = ROW_HEIGHT * 4;
+
 const toMinutes = (t: string) => {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 };
+
+interface ColumnProps {
+  label: string;
+  value: string;
+  onSelect: (v: string) => void;
+}
+
+function TimeColumn({ label, value, onSelect }: ColumnProps) {
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const idx = Math.max(0, TIME_OPTIONS.indexOf(value));
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: idx * ROW_HEIGHT, animated: false });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  return (
+    <View style={styles.col}>
+      <Text style={styles.colLabel}>{label}</Text>
+      <View style={styles.listWrap}>
+        <ScrollView
+          ref={scrollRef}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ROW_HEIGHT}
+          decelerationRate="fast"
+        >
+          {TIME_OPTIONS.map(t => {
+            const selected = t === value;
+            return (
+              <TouchableOpacity
+                key={t}
+                style={[styles.row, selected && styles.rowSelected]}
+                onPress={() => onSelect(t)}
+              >
+                <Text style={[styles.rowText, selected && styles.rowTextSelected]}>{t}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
 
 interface Props {
   visible: boolean;
@@ -49,33 +98,15 @@ export default function TimeRangePickerModal({
           <Text style={styles.subtitle}>{dayLabel} · {slotLabel}</Text>
 
           <View style={styles.pickersRow}>
-            <View style={styles.pickerCol}>
-              <Text style={styles.pickerLabel}>Dalle</Text>
-              <Picker
-                selectedValue={start}
-                onValueChange={(v) => setStart(String(v))}
-                style={styles.picker}
-                itemStyle={styles.pickerItem}
-              >
-                {TIME_OPTIONS.map(t => <Picker.Item key={t} label={t} value={t} />)}
-              </Picker>
-            </View>
-
-            <View style={styles.pickerCol}>
-              <Text style={styles.pickerLabel}>Alle</Text>
-              <Picker
-                selectedValue={end}
-                onValueChange={(v) => setEnd(String(v))}
-                style={styles.picker}
-                itemStyle={styles.pickerItem}
-              >
-                {TIME_OPTIONS.map(t => <Picker.Item key={t} label={t} value={t} />)}
-              </Picker>
-            </View>
+            <TimeColumn label="Dalle" value={start} onSelect={setStart} />
+            <View style={styles.separator} />
+            <TimeColumn label="Alle" value={end} onSelect={setEnd} />
           </View>
 
           {invalid && (
-            <Text style={styles.error}>L&apos;orario di chiusura deve essere successivo all&apos;apertura.</Text>
+            <Text style={styles.error}>
+              L&apos;orario di chiusura deve essere successivo all&apos;apertura.
+            </Text>
           )}
 
           <TouchableOpacity
@@ -114,13 +145,34 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: { fontSize: 20, fontWeight: '700', color: '#1a2a4a', textAlign: 'center' },
-  subtitle: { fontSize: 13, color: '#2e7d32', fontWeight: '600', textAlign: 'center', marginTop: 2, marginBottom: 8 },
-  pickersRow: { flexDirection: 'row', gap: 16 },
-  pickerCol: { flex: 1 },
-  pickerLabel: { fontSize: 13, fontWeight: '600', color: '#555', textAlign: 'center', marginBottom: Platform.OS === 'ios' ? 0 : 6 },
-  picker: { width: '100%' },
-  pickerItem: { fontSize: 20, height: 150 },
-  error: { fontSize: 12, color: '#c0392b', textAlign: 'center', marginTop: 8 },
+  subtitle: {
+    fontSize: 13, color: '#2e7d32', fontWeight: '600',
+    textAlign: 'center', marginTop: 2, marginBottom: 16,
+  },
+  pickersRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  separator: { width: 16 },
+  col: { flex: 1 },
+  colLabel: {
+    fontSize: 13, fontWeight: '600', color: '#555',
+    textAlign: 'center', marginBottom: 8,
+  },
+  listWrap: {
+    height: LIST_HEIGHT,
+    borderRadius: 14,
+    backgroundColor: '#f5faf6',
+    borderWidth: 1,
+    borderColor: '#e3e6ea',
+    overflow: 'hidden',
+  },
+  row: {
+    height: ROW_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowSelected: { backgroundColor: '#2e7d32' },
+  rowText: { fontSize: 18, color: '#555', fontWeight: '500' },
+  rowTextSelected: { color: '#fff', fontWeight: '700' },
+  error: { fontSize: 12, color: '#c0392b', textAlign: 'center', marginTop: 12 },
   confirmBtn: {
     backgroundColor: '#2e7d32',
     borderRadius: 14,

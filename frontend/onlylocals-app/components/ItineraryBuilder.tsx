@@ -139,45 +139,51 @@ export default function ItineraryBuilder({ value, onChange }: Props) {
         {SLOTS.map(s => {
           const loc = value[selectedDay]?.[s.key];
           return (
-            <TouchableOpacity
-              key={s.key}
-              style={[styles.slotCard, loc && styles.slotCardSet]}
-              activeOpacity={0.8}
-              onPress={() => setEditing({ day: selectedDay, slot: s.key })}
-            >
-              <View style={[styles.slotIcon, loc && styles.slotIconSet]}>
-                <Ionicons name={s.icon} size={22} color={loc ? '#2e7d32' : '#9aa0a6'} />
-              </View>
-              <View style={styles.slotBody}>
-                <Text style={styles.slotLabel}>{s.label}</Text>
+            <View key={s.key} style={[styles.slotCard, loc && styles.slotCardSet]}>
+              <View style={styles.slotRow}>
+                <TouchableOpacity
+                  style={styles.slotMain}
+                  activeOpacity={0.8}
+                  onPress={() => setEditing({ day: selectedDay, slot: s.key })}
+                >
+                  <View style={[styles.slotIcon, loc && styles.slotIconSet]}>
+                    <Ionicons name={s.icon} size={22} color={loc ? '#2e7d32' : '#9aa0a6'} />
+                  </View>
+                  <View style={styles.slotBody}>
+                    <Text style={styles.slotLabel}>{s.label}</Text>
+                    {loc ? (
+                      <Text style={styles.slotAddress} numberOfLines={1}>{loc.indirizzo}</Text>
+                    ) : (
+                      <Text style={styles.slotSub}>Tocca per impostare la posizione</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
                 {loc ? (
-                  <>
-                    <Text style={styles.slotAddress} numberOfLines={1}>{loc.indirizzo}</Text>
-                    <TouchableOpacity
-                      style={styles.timeChip}
-                      onPress={() => setEditingTime({ day: selectedDay, slot: s.key })}
-                    >
-                      <Ionicons name="time-outline" size={13} color="#2e7d32" />
-                      <Text style={styles.timeChipText}>{loc.oraInizio} – {loc.oraFine}</Text>
-                      <Ionicons name="chevron-down" size={12} color="#2e7d32" />
-                    </TouchableOpacity>
-                  </>
+                  <TouchableOpacity
+                    hitSlop={10}
+                    onPress={() => setLocation(selectedDay, s.key, null)}
+                    style={styles.removeBtn}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#c0392b" />
+                  </TouchableOpacity>
                 ) : (
-                  <Text style={styles.slotSub}>Tocca per impostare la posizione</Text>
+                  <Ionicons name="add-circle" size={26} color="#2e7d32" />
                 )}
               </View>
-              {loc ? (
+
+              {loc && (
                 <TouchableOpacity
-                  hitSlop={10}
-                  onPress={() => setLocation(selectedDay, s.key, null)}
-                  style={styles.removeBtn}
+                  style={styles.timeChip}
+                  activeOpacity={0.7}
+                  onPress={() => setEditingTime({ day: selectedDay, slot: s.key })}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#c0392b" />
+                  <Ionicons name="time-outline" size={14} color="#2e7d32" />
+                  <Text style={styles.timeChipText}>{loc.oraInizio} – {loc.oraFine}</Text>
+                  <Ionicons name="chevron-down" size={13} color="#2e7d32" />
                 </TouchableOpacity>
-              ) : (
-                <Ionicons name="add-circle" size={26} color="#2e7d32" />
               )}
-            </TouchableOpacity>
+            </View>
           );
         })}
       </View>
@@ -254,8 +260,6 @@ const styles = StyleSheet.create({
   dayDotActive: { backgroundColor: '#fff' },
   slotsWrap: { marginTop: 24, gap: 12 },
   slotCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 14,
@@ -263,6 +267,8 @@ const styles = StyleSheet.create({
     borderColor: '#e3e6ea',
   },
   slotCardSet: { borderColor: '#2e7d32', backgroundColor: '#f5faf6' },
+  slotRow: { flexDirection: 'row', alignItems: 'center' },
+  slotMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   slotIcon: {
     width: 44,
     height: 44,
@@ -279,15 +285,16 @@ const styles = StyleSheet.create({
   timeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     alignSelf: 'flex-start',
     backgroundColor: '#e3f1e5',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginTop: 6,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
+    marginLeft: 58,
   },
-  timeChipText: { fontSize: 12, color: '#2e7d32', fontWeight: '700' },
+  timeChipText: { fontSize: 13, color: '#2e7d32', fontWeight: '700' },
   removeBtn: {
     width: 34,
     height: 34,
