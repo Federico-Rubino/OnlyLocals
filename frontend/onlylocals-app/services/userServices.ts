@@ -1,6 +1,23 @@
 import apiClient from './api';
 import { RegisterPayload, RegisterResponse } from '../types/user';
 
+export type FidelityShopEntry = {
+  shopId: string;
+  shopName: string;
+  punti: number;
+  vantaggi: { descrizione: string; sogliaPunti: number }[];
+};
+
+export type FidelityCardData = {
+  barcode: string;
+  shops: FidelityShopEntry[];
+};
+
+export const getFidelityCard = async (): Promise<FidelityCardData> => {
+  const response = await apiClient.get<{ success: boolean; data: FidelityCardData }>('/users/fidelity/points');
+  return response.data.data;
+};
+
 function toISODate(ddmmyyyy: string): string {
   const [dd, mm, yyyy] = ddmmyyyy.split('/');
   return `${yyyy}-${mm}-${dd}`;
