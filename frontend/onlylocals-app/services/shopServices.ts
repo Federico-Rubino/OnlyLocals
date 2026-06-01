@@ -50,6 +50,8 @@ export interface ItinerarioSlotPayload {
   latitudine: number;
   longitudine: number;
   indirizzo?: string;
+  oraInizio?: string;
+  oraFine?: string;
 }
 
 export type ItinerarioPayload = Record<
