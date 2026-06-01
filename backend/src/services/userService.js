@@ -15,8 +15,6 @@ exports.createUser = async (data) => {
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
-  const userId = new mongoose.Types.ObjectId();//barcode
-
   const user = {
     name: data.name,
     surname: data.surname,
@@ -25,12 +23,7 @@ exports.createUser = async (data) => {
     auth: {
       passwordHash: hashedPassword,
       username: data.username
-    },
-     fidelityCard: {
-      barcode: userId.toString(),
-      points: []
     }
-
   };
 
   return User.create(user);
@@ -190,6 +183,10 @@ exports.setAsCustomer = async (userId) => {
   }
 
   user.role = 'customer';
+  user.fidelityCard = {
+    barcode: new mongoose.Types.ObjectId().toString(),
+    points: []
+  };
   await user.save();
 
   return user.role;
