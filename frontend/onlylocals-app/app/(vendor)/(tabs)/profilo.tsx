@@ -18,6 +18,11 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import { UserProfile, userService } from '../../../services/userService';
 
+const SETTINGS = [
+  { id: 1, label: 'Impostazioni', icon: 'settings-outline' as const, route: '/(vendor)/settings/settings' },
+  { id: 2, label: 'Aspetto',      icon: 'moon-outline' as const,      route: '/(vendor)/settings/appearance' },
+];
+
 export default function ProfiloScreen() {
   const { logout } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -79,7 +84,7 @@ export default function ProfiloScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          router.replace('/(auth)/login');
+          router.replace('/(customer)/(tabs)');
         },
       },
     ]);
@@ -123,6 +128,25 @@ export default function ProfiloScreen() {
         <InfoRow icon="mail-outline" label="Email" value={user.email} />
         <View style={styles.rowDivider} />
         <InfoRow icon="calendar-outline" label="Data di nascita" value={birthDate} />
+      </View>
+
+      {/* Settings section */}
+      <Text style={styles.sectionTitle}>Impostazioni</Text>
+      <View style={styles.card}>
+        {SETTINGS.map((item, index) => (
+          <View key={item.id}>
+            {index > 0 && <View style={styles.rowDivider} />}
+            <TouchableOpacity
+              style={styles.settingsRow}
+              onPress={() => router.push(item.route as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={item.icon} size={18} color="#6b6b6b" style={{ marginRight: 10 }} />
+              <Text style={styles.settingsLabel}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#ccc" />
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
 
       {/* Logout */}
@@ -230,6 +254,9 @@ const styles = StyleSheet.create({
   rowDivider:     { height: 0.5, backgroundColor: 'rgba(0,0,0,0.08)', marginHorizontal: 0 },
   infoLabel:      { fontSize: 11, color: '#6b6b6b' },
   infoValue:      { fontSize: 14, color: '#1a1a1a', fontWeight: '500', marginTop: 2 },
+
+  settingsRow:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  settingsLabel:  { flex: 1, fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
 
   logoutBtn:      { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(231,76,60,0.3)', padding: 16 },
   logoutText:     { fontSize: 15, fontWeight: '600', color: '#e74c3c' },
