@@ -37,7 +37,7 @@ interface SlotInfo {
 const getCurrentSlotInfo = (itinerario: SearchResult['itinerario']): SlotInfo | null => {
   const day = getCurrentDayKey();
   const slot = getCurrentSlotKey();
-  const slotData = itinerario[day]?.[slot];
+  const slotData = itinerario?.[day]?.[slot];
   if (!slotData?.indirizzo) return null;
   return { indirizzo: slotData.indirizzo, dayLabel: DAY_LABELS[day], slotLabel: SLOT_LABELS[slot] };
 };
@@ -60,7 +60,7 @@ const getNextSlotInfo = (itinerario: SearchResult['itinerario']): SlotInfo | nul
   }
 
   for (const [day, slot] of upcoming) {
-    const slotData = itinerario[day]?.[slot];
+    const slotData = itinerario?.[day]?.[slot];
     if (slotData?.indirizzo) {
       return { indirizzo: slotData.indirizzo, dayLabel: DAY_LABELS[day], slotLabel: SLOT_LABELS[slot] };
     }

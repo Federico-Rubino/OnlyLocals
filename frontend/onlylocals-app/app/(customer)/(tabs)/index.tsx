@@ -20,7 +20,7 @@ const extractCurrentMarker = (
   const day = getCurrentDayKey();
   const slot = getCurrentSlotKey();
 
-  const slotData = shop.itinerario[day]?.[slot];
+  const slotData = shop.itinerario?.[day]?.[slot];
   if (!slotData) return null; // shop not active right now
 
   let lng: number | undefined;

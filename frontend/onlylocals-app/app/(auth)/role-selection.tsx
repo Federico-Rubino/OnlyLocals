@@ -50,6 +50,8 @@ function buildItinerarioPayload(state: ItineraryState): ItinerarioPayload {
           latitudine: loc.latitudine,
           longitudine: loc.longitudine,
           indirizzo: loc.indirizzo,
+          oraInizio: loc.oraInizio,
+          oraFine: loc.oraFine,
         };
       }
     }

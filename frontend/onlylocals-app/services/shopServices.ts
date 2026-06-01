@@ -80,6 +80,8 @@ export interface ItinerarioSlotPayload {
   latitudine: number;
   longitudine: number;
   indirizzo?: string;
+  oraInizio?: string;
+  oraFine?: string;
 }
 
 export type ItinerarioPayload = Record<
@@ -95,5 +97,38 @@ export const registerShop = async (data: {
 }): Promise<{ newRole: string; id: string }> => {
   const response = await apiClient.post('/shops/register', data);
   return response.data;
+};
+
+export type Vantaggio = {
+  descrizione: string;
+  sogliaPunti: number;
+};
+
+export const getVantaggi = async (): Promise<Vantaggio[]> => {
+  const response = await apiClient.get<{ success: boolean; data: Vantaggio[] }>('/shops/fidelity/vantaggi');
+  return response.data.data;
+};
+
+export const setVantaggi = async (vantaggi: Vantaggio[]): Promise<void> => {
+  await apiClient.put('/shops/fidelity/vantaggi', { vantaggi });
+};
+
+export const modifyConversion = async (tasso: number): Promise<void> => {
+  await apiClient.put('/shops/fidelity/modifyConversion', { tasso });
+};
+
+export const scanCard = async (barcode: string): Promise<{ puntiTotali: number; utente: string }> => {
+  const response = await apiClient.post('/shops/fidelity/scan', { barcode });
+  return response.data.data;
+};
+
+export const addPointsCard = async (barcode: string, importo: number): Promise<{ puntiGuadagnati: number; puntiTotali: number; utente: string }> => {
+  const response = await apiClient.post('/shops/fidelity/scan/addPoints', { barcode, importo });
+  return response.data.data;
+};
+
+export const redeemCard = async (barcode: string, descrizioneVantaggio: string): Promise<{ vantaggio: Vantaggio; puntiRimanenti: number; utente: string }> => {
+  const response = await apiClient.post('/shops/fidelity/scan/redeem', { barcode, descrizioneVantaggio });
+  return response.data.data;
 };
 
