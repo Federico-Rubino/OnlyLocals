@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import QRCodeView from '../../../components/QRCodeView';
 import { FidelityCardData, FidelityShopEntry, getFidelityCard } from '../../../services/userServices';
 
 export default function FidelityCardScreen() {
@@ -52,7 +52,7 @@ export default function FidelityCardScreen() {
       <View style={styles.qrCard}>
         {data?.barcode ? (
           <>
-            <QRCode
+            <QRCodeView
               value={data.barcode}
               size={200}
               color="#1a2a4a"
