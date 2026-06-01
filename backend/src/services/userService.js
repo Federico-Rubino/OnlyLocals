@@ -262,7 +262,26 @@ exports.getPoints = async (userId) => {
         throw new Error("Fidelity card not found");
     }
 
-    return user.fidelityCard.points;
+    const shopIds = user.fidelityCard.points.map(p => p.activity);
+    const shops = await Shop.find({ _id: { $in: shopIds } })
+        .select('name fidelityCardManager.vantaggi');
+
+    const shopMap = {};
+    shops.forEach(s => { shopMap[s._id.toString()] = s; });
+
+    const enriched = user.fidelityCard.points
+        .filter(p => p.count > 0)
+        .map(p => ({
+            shopId:    p.activity,
+            shopName:  shopMap[p.activity]?.name ?? 'Negozio sconosciuto',
+            punti:     p.count,
+            vantaggi:  shopMap[p.activity]?.fidelityCardManager?.vantaggi ?? [],
+        }));
+
+    return {
+        barcode: user.fidelityCard.barcode,
+        shops:   enriched,
+    };
 };
 
 
