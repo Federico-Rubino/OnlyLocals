@@ -2,6 +2,16 @@
 const User = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 
+exports.optionalAuth = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return next();
+    jwt.verify(token, process.env.JWT_TOKEN, (err, decodeData) => {
+        if (!err) req.user = decodeData;
+        next();
+    });
+};
+
 exports.autenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
