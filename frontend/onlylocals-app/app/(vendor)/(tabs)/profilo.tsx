@@ -79,7 +79,7 @@ export default function ProfiloScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          router.replace('/(auth)/login');
+          router.replace('/(customer)/(tabs)');
         },
       },
     ]);
