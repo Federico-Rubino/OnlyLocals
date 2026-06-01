@@ -18,10 +18,8 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import {
   addPointsCard,
-  getShopById,
   getVantaggi,
   redeemCard,
-  scanCard,
   Vantaggio,
 } from '../../../services/shopServices';
 
@@ -42,7 +40,6 @@ export default function CameraScreen() {
   const [scanState, setScanState] = useState<ScanState>('scanning');
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [modo, setModo] = useState<'visita' | 'acquisto'>('visita');
   const [vantaggi, setVantaggiList] = useState<Vantaggio[]>([]);
   const [importo, setImporto] = useState('');
   const [selectedVantaggio, setSelectedVantaggio] = useState('');
@@ -59,13 +56,7 @@ export default function CameraScreen() {
 
   useEffect(() => {
     if (!shopId) return;
-    Promise.all([getShopById(shopId), getVantaggi()])
-      .then(([shop, v]) => {
-        const mgr = (shop as any).fidelityCardManager;
-        if (mgr?.modo) setModo(mgr.modo);
-        setVantaggiList(v);
-      })
-      .catch(() => {});
+    getVantaggi().then(setVantaggiList).catch(() => {});
   }, [shopId]);
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
@@ -85,26 +76,20 @@ export default function CameraScreen() {
   };
 
   const doAddPoints = async () => {
+    const imp = parseFloat(importo.replace(',', '.'));
+    if (!imp || imp <= 0) {
+      Alert.alert('Attenzione', 'Inserisci un importo valido.');
+      return;
+    }
     setLoading(true);
     try {
-      if (modo === 'visita') {
-        const data = await scanCard(barcode);
-        setResult({ utente: data.utente, puntiTotali: data.puntiTotali, tipo: 'punti' });
-      } else {
-        const imp = parseFloat(importo.replace(',', '.'));
-        if (!imp || imp <= 0) {
-          Alert.alert('Attenzione', 'Inserisci un importo valido.');
-          setLoading(false);
-          return;
-        }
-        const data = await addPointsCard(barcode, imp);
-        setResult({
-          utente: data.utente,
-          puntiTotali: data.puntiTotali,
-          puntiGuadagnati: data.puntiGuadagnati,
-          tipo: 'punti',
-        });
-      }
+      const data = await addPointsCard(barcode, imp);
+      setResult({
+        utente: data.utente,
+        puntiTotali: data.puntiTotali,
+        puntiGuadagnati: data.puntiGuadagnati,
+        tipo: 'punti',
+      });
       setScanState('result');
     } catch (err: any) {
       Alert.alert('Errore', err.response?.data?.message || 'Impossibile aggiungere i punti');
@@ -180,9 +165,7 @@ export default function CameraScreen() {
               <Ionicons name="add-circle-outline" size={24} color="#1a2a4a" />
               <View>
                 <Text style={styles.sheetActionLabel}>Aggiungi punti</Text>
-                <Text style={styles.sheetActionSub}>
-                  {modo === 'visita' ? 'Aggiunge 1 punto per la visita' : 'Inserisci importo speso'}
-                </Text>
+                <Text style={styles.sheetActionSub}>Inserisci importo speso dal cliente</Text>
               </View>
             </TouchableOpacity>
 
@@ -206,24 +189,18 @@ export default function CameraScreen() {
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>Aggiungi punti</Text>
-            {modo === 'acquisto' ? (
-              <>
-                <Text style={styles.sheetSubtitle}>Inserisci l'importo speso dal cliente</Text>
-                <View style={styles.field}>
-                  <Text style={styles.fieldLabel}>Importo (€)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="es. 25.50"
-                    value={importo}
-                    onChangeText={setImporto}
-                    keyboardType="decimal-pad"
-                    autoFocus
-                  />
-                </View>
-              </>
-            ) : (
-              <Text style={styles.sheetSubtitle}>Verrà aggiunto 1 punto per questa visita.</Text>
-            )}
+            <Text style={styles.sheetSubtitle}>Inserisci l'importo speso dal cliente</Text>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Importo (€)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="es. 25.50"
+                value={importo}
+                onChangeText={setImporto}
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+            </View>
             <TouchableOpacity style={styles.primaryBtn} onPress={doAddPoints} disabled={loading}>
               <Text style={styles.primaryBtnText}>{loading ? 'Conferma in corso...' : 'Conferma'}</Text>
             </TouchableOpacity>

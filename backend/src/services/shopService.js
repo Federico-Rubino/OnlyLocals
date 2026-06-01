@@ -322,10 +322,6 @@ exports.addPoints = async (vendorId, barcode, importo) => {
         };
     }
 
-    if (shop.fidelityCardManager.modo === 'visita') {
-        throw new Error("Modalità non compatibile: shop usa punti per visita, usa scan");
-    }
-
     const tasso = shop.fidelityCardManager.tassoConversione;
     if (!tasso || tasso <= 0) throw new Error("Tasso di conversione non configurato");
 
@@ -339,11 +335,6 @@ exports.addPoints = async (vendorId, barcode, importo) => {
     );
 
     let shopNeedsSave = false;
-
-    if (!shop.fidelityCardManager.modo) {
-        shop.fidelityCardManager.modo = 'acquisto';
-        shopNeedsSave = true;
-    }
 
     if (pointEntry) {
         pointEntry.count += puntiGuadagnati;
