@@ -254,6 +254,9 @@ exports.scanFidelityCard = async (req, res) => {
         if (err.message === "Modalità non compatibile: shop usa punti per acquisto, usa addPoints") {
             return res.status(400).json({ success: false, message: err.message });
         }
+        if (err.message === "Fidelity card manager not configured") {
+            return res.status(409).json({ success: false, message: err.message });
+        }
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }
 };
@@ -333,6 +336,9 @@ exports.addPoints = async (req, res) => {
         }
         if (err.message === "Tasso di conversione non configurato") {
             return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Fidelity card manager not configured") {
+            return res.status(409).json({ success: false, message: err.message });
         }
         res.status(500).json({ success: false, message: "Internal server error", error: err.message });
     }

@@ -77,6 +77,15 @@ exports.assignShop = async (shopId, userId) => {
         throw new Error("User already has a shop assigned");
     }
 
+    if (!shop.fidelityCardManager) {
+        shop.fidelityCardManager = {
+            numeroUtenti:   0,
+            ultimaModifica: null,
+            vantaggi:       []
+        };
+        await shop.save();
+    }
+
     user.vendorShop = shopId;
     user.role = 'vendor';
     await user.save();
@@ -233,13 +242,7 @@ exports.deletePromotion = async (vendorId, description) => {
 exports.scanFidelityCard = async (vendorId, barcode) => {
     const shop = await getShopFromVendor(vendorId);
 
-    if (!shop.fidelityCardManager) {
-        shop.fidelityCardManager = {
-            numeroUtenti: 0,
-            ultimaModifica: null,
-            vantaggi: []
-        };
-    }
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
 
     if (shop.fidelityCardManager.modo === 'acquisto') {
         throw new Error("Modalità non compatibile: shop usa punti per acquisto, usa addPoints");
@@ -314,13 +317,7 @@ exports.getVantaggi = async (vendorId) => {
 exports.addPoints = async (vendorId, barcode, importo) => {
     const shop = await getShopFromVendor(vendorId);
 
-    if (!shop.fidelityCardManager) {
-        shop.fidelityCardManager = {
-            numeroUtenti:   0,
-            ultimaModifica: null,
-            vantaggi:       []
-        };
-    }
+    if (!shop.fidelityCardManager) throw new Error("Fidelity card manager not configured");
 
     if (shop.fidelityCardManager.modo === 'visita') {
         throw new Error("Modalità non compatibile: shop usa punti per visita, usa scan");
