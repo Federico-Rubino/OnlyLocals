@@ -12,7 +12,9 @@ const PositionSchema = new mongoose.Schema({
       required: true
     }
   },
-  indirizzo: String
+  indirizzo: String,
+  oraInizio: String, // orario di apertura della fascia, formato "HH:MM"
+  oraFine: String    // orario di chiusura della fascia, formato "HH:MM"
 }, { _id: false });
 
 const DaySchema = new mongoose.Schema({

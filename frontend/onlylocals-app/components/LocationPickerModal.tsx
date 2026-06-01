@@ -3,14 +3,15 @@ import Mapbox from '@rnmapbox/maps';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Modal, StyleSheet, Text, TouchableOpacity, View,
+  ActivityIndicator, Keyboard, Modal, StyleSheet, Text, TextInput,
+  TouchableOpacity, View,
 } from 'react-native';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
 const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
 
-export interface PickedLocation {
+export interface PickedCoordinates {
   latitudine: number;
   longitudine: number;
   indirizzo: string;
@@ -22,7 +23,7 @@ interface Props {
   dayLabel: string;
   slotLabel: string;
   onClose: () => void;
-  onConfirm: (loc: PickedLocation) => void;
+  onConfirm: (loc: PickedCoordinates) => void;
 }
 
 export default function LocationPickerModal({
@@ -35,9 +36,14 @@ export default function LocationPickerModal({
   const [address, setAddress] = useState('');
   const [resolving, setResolving] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   useEffect(() => {
     if (!visible) return;
+    setQuery('');
+    setSearchError('');
     const init = initialCoordinate ?? MILAN_CENTER;
     centerRef.current = init;
     const t = setTimeout(() => {
@@ -80,6 +86,35 @@ export default function LocationPickerModal({
     centerRef.current = [center[0], center[1]];
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => reverseGeocode(centerRef.current), 450);
+  };
+
+  const handleSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    Keyboard.dismiss();
+    setSearching(true);
+    setSearchError('');
+    try {
+      const results = await Location.geocodeAsync(q);
+      if (!results.length) {
+        setSearchError('Indirizzo non trovato. Prova a essere più specifico.');
+        return;
+      }
+      const { latitude, longitude } = results[0];
+      const coord: [number, number] = [longitude, latitude];
+      centerRef.current = coord;
+      cameraRef.current?.setCamera({
+        centerCoordinate: coord,
+        zoomLevel: 16,
+        animationMode: 'flyTo',
+        animationDuration: 800,
+      });
+      reverseGeocode(coord);
+    } catch {
+      setSearchError('Ricerca non riuscita. Riprova.');
+    } finally {
+      setSearching(false);
+    }
   };
 
   const handleUseMyLocation = async () => {
@@ -138,6 +173,31 @@ export default function LocationPickerModal({
             <Text style={styles.headerDay}>{dayLabel}</Text>
             <Text style={styles.headerSlot}>{slotLabel}</Text>
           </View>
+        </View>
+
+        {/* Address search */}
+        <View style={styles.searchWrap}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={18} color="#9aa0a6" />
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={t => { setQuery(t); if (searchError) setSearchError(''); }}
+              placeholder="Cerca un indirizzo o una città"
+              placeholderTextColor="#9aa0a6"
+              returnKeyType="search"
+              onSubmitEditing={handleSearch}
+              autoCorrect={false}
+            />
+            {searching ? (
+              <ActivityIndicator size="small" color="#2e7d32" />
+            ) : query.length > 0 ? (
+              <TouchableOpacity onPress={handleSearch} hitSlop={8}>
+                <Ionicons name="arrow-forward-circle" size={24} color="#2e7d32" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {searchError ? <Text style={styles.searchError}>{searchError}</Text> : null}
         </View>
 
         {/* "Use my location" floating button */}
@@ -226,6 +286,43 @@ const styles = StyleSheet.create({
   },
   headerDay: { fontSize: 15, fontWeight: '700', color: '#1a2a4a' },
   headerSlot: { fontSize: 12, color: '#2e7d32', fontWeight: '600' },
+  searchWrap: {
+    position: 'absolute',
+    top: 104,
+    left: 16,
+    right: 16,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 48,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1a2a4a',
+  },
+  searchError: {
+    marginTop: 6,
+    marginLeft: 4,
+    fontSize: 12,
+    color: '#c0392b',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
   gpsBtn: {
     position: 'absolute',
     right: 16,
