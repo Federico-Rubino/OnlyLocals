@@ -40,8 +40,9 @@ export const deleteEvento = async (name: string): Promise<void> => {
 };
 
 export const updateShop = async (data: {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
+  itinerario?: Record<string, any>;
 }): Promise<void> => {
   await apiClient.put('/shops/update', data);
 };
