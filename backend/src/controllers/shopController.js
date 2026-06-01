@@ -1,5 +1,6 @@
 
 const shopService = require('../services/shopService');
+const User = require('../models/userModel');
 
 exports.registerShop = async (req, res) => {
     try {
@@ -35,7 +36,14 @@ exports.registerShop = async (req, res) => {
 }
 exports.getShopById = async (req, res) =>{
   try{
-        const shop = await shopService.getShopById(req.params.id);
+        let skipCount = false;
+        if (req.user) {
+            const user = await User.findById(req.user.userId).select('vendorShop');
+            if (user && user.vendorShop && user.vendorShop.toString() === req.params.id) {
+                skipCount = true;
+            }
+        }
+        const shop = await shopService.getShopById(req.params.id, skipCount);
         if(!shop){
             return res.status(404).json({message: "Shop not found"});
         }

@@ -3,10 +3,10 @@ const User = require('../models/userModel');
 const notificationService = require('./notificationService');
 
 
-exports.getShopById = async (id) =>{
+exports.getShopById = async (id, skipCount = false) => {
   const shop = await Shop.findById(id);
 
-  if(shop){
+  if (shop && !skipCount) {
     shop.statistiche.mappaAccessi.push({
         data: new Date(),
         valore: 1
