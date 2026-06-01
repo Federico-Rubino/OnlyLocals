@@ -69,7 +69,7 @@ export default function ShopResult({ isLoading, errorMessage, shopData, shopId }
   }
 
   const { events, itinerario } = shopData;
-  const datiGiorno = itinerario[giornoSelezionato as keyof typeof itinerario];
+  const datiGiorno = itinerario?.[giornoSelezionato as keyof typeof itinerario];
   const posizioneAttuale = datiGiorno ? datiGiorno[fasciaSelezionata] : null;
 
   const renderFasciaTab = (label: string, tipo: 'mattina' | 'pomeriggio' | 'sera') => {
