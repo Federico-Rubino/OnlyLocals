@@ -17,4 +17,8 @@ export const userService = {
   updateProfile: async (data: Partial<UserProfile>): Promise<void> => {
     await apiClient.patch('/users/profile', data);
   },
+
+  deleteAccount: async (): Promise<void> => {
+    await apiClient.delete('/users/account');
+  },
 };
