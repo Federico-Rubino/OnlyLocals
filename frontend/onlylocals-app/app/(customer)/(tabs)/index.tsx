@@ -1,9 +1,9 @@
 import Mapbox from '@rnmapbox/maps';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import SearchBar from '../../../components/SearchBar';
+import SearchBar, { SearchTrigger } from '../../../components/SearchBar';
 import FilterBar from '../../../components/FilterBar';
 import ShopResultsList from '../../../components/ShopResultsList';
 import { SearchResult } from '../../../services/searchService';
@@ -49,8 +49,20 @@ const HomeScreen = () => {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [userCoordinate, setUserCoordinate] = useState<[number, number] | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchTrigger, setSearchTrigger] = useState<SearchTrigger | null>(null);
 
   const router = useRouter();
+  const { q, cats, ts } = useLocalSearchParams<{ q?: string; cats?: string; ts?: string }>();
+
+  // Fire a search when we arrive here from a saved-search tap
+  useEffect(() => {
+    if (!ts) return;
+    setSearchTrigger({
+      query: q ?? '',
+      categories: cats ? cats.split('|').filter(Boolean) : [],
+      ts: Number(ts),
+    });
+  }, [ts]);
   // Request location permission and fly to user position on mount
   useEffect(() => {
     (async () => {
@@ -182,6 +194,7 @@ const HomeScreen = () => {
             onResultsFound={handleResultsFound}
             onClear={handleClear}
             onSaveSearch={handleSaveSearch}
+            searchTrigger={searchTrigger}
           />
           
         {/* Bottom sheet with results list */}

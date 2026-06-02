@@ -257,7 +257,20 @@ export default function FavoritesScreen() {
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity
+                  style={styles.card}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(customer)/(tabs)/',
+                      params: {
+                        q: item.name ?? '',
+                        cats: item.categories?.join('|') ?? '',
+                        ts: Date.now().toString(),
+                      },
+                    })
+                  }
+                >
                   <Ionicons name="search" size={20} color="#255cb3" style={styles.searchIcon} />
                   <View style={styles.info}>
                     {!!item.name && (
@@ -282,7 +295,7 @@ export default function FavoritesScreen() {
                   >
                     <Ionicons name="trash-outline" size={20} color="#aaa" />
                   </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               )}
             />
           )}
