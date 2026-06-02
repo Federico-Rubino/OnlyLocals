@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -20,18 +20,26 @@ const CATEGORIES = [
   'Servizi & Professionisti'
 ];
 
+export interface SearchTrigger {
+  query: string;
+  categories: string[];
+  ts: number; // changes each time so the effect always fires
+}
+
 interface SearchBarProps {
   onResultsFound: (results: SearchResult[]) => void;
   onClear: () => void;
   onSaveSearch?: (name: string, categories: string[]) => void;
+  searchTrigger?: SearchTrigger | null;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSearch }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSearch, searchTrigger }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const consumedTs = useRef<number>(0);
 
   // Function to update Map Results (Immediate)
   const updateMapResults = async (query: string, categories: string[]) => {
@@ -71,6 +79,28 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Effect for external search trigger (from saved searches)
+  useEffect(() => {
+    if (!searchTrigger || searchTrigger.ts === consumedTs.current) return;
+    consumedTs.current = searchTrigger.ts;
+
+    const { query, categories } = searchTrigger;
+    setSearchQuery(query);
+    setSelectedCategories(categories);
+    setShowSuggestions(false);
+
+    if (!query.trim() && categories.length === 0) { onClear(); return; }
+
+    setIsLoading(true);
+    searchShop({
+      name: query.trim() || undefined,
+      category: categories.length > 0 ? categories : undefined,
+    })
+      .then(res => { onResultsFound(res.data || []); })
+      .catch(err => console.error('Triggered search failed', err))
+      .finally(() => setIsLoading(false));
+  }, [searchTrigger]);
 
   // Handler for Categories: Updates map ONLY (No dropdown)
   const toggleCategory = async (cat: string) => {
