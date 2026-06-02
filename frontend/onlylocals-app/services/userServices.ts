@@ -13,6 +13,12 @@ export type FidelityCardData = {
   shops: FidelityShopEntry[];
 };
 
+export type SavedSearch = {
+  name?: string;
+  categories?: string[];
+  raw: string;
+};
+
 export const getFidelityCard = async (): Promise<FidelityCardData> => {
   const response = await apiClient.get<{ success: boolean; data: FidelityCardData }>('/users/fidelity/points');
   return response.data.data;
@@ -35,6 +41,19 @@ export const userService = {
       data: { shopId },
     });
     return response.data.data;
+  },
+
+  saveSearch: async (name?: string, categories?: string[]): Promise<void> => {
+    await apiClient.post('/users/searches', { name, categories });
+  },
+
+  getSavedSearches: async (): Promise<SavedSearch[]> => {
+    const response = await apiClient.get<{ success: boolean; data: SavedSearch[] }>('/users/searches');
+    return response.data.data;
+  },
+
+  removeSearch: async (raw: string): Promise<void> => {
+    await apiClient.delete('/users/searches', { data: { search: raw } });
   },
 
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
