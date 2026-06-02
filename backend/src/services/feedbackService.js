@@ -36,7 +36,12 @@ exports.addFeedback = async (authorId, data) => {
 
   const prevTotal = shop.statistiche.totaleFeedback || 0;
   const prevAvg = shop.statistiche.votoMedio || 0;
-  shop.statistiche.storicoFeedback.push(feedback._id);
+  shop.statistiche.storicoFeedback.push({
+    voto: rating,
+    commento: comment || '',
+    user: authorId,
+    data: new Date()
+  });
   shop.statistiche.totaleFeedback = prevTotal + 1;
   shop.statistiche.votoMedio = ((prevAvg * prevTotal) + rating) / (prevTotal + 1);
   shop.statistiche.ultimoAggiornamento = new Date();
