@@ -255,12 +255,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f7fa',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a2a4a',
     marginBottom: 6,
   },
   subtitle: {
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#255cb3',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   loginLink: {
-    color: '#007AFF',
+    color: '#255cb3',
     fontWeight: '600',
   },
 });

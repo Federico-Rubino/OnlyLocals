@@ -266,13 +266,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f7fa',
   },
   formContainer: {
     flexGrow: 1,
     padding: 24,
     paddingTop: 48,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f7fa',
   },
   title: {
     fontSize: 32,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   button: {
-    backgroundColor: '#2e7d32',
+    backgroundColor: '#255cb3',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',

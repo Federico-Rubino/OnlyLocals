@@ -85,7 +85,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  pageTitle:    { fontSize: 26, fontWeight: 'bold', marginBottom: 20, marginTop: 8 },
+  pageTitle:    { fontSize: 26, fontWeight: '700', color: '#1a2a4a', marginBottom: 20, marginTop: 8 },
   sectionTitle: { fontSize: 12, fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginTop: 16, marginLeft: 4 },
   card:         { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
