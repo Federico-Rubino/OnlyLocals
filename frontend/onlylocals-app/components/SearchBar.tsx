@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     elevation: 2,
   },
-  activeChip: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  activeChip: { backgroundColor: '#255cb3', borderColor: '#255cb3' },
   chipText: { fontSize: 12, color: '#4B5563', fontWeight: '600' },
   activeText: { color: 'white' },
   saveBtn: {

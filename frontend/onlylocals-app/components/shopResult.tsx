@@ -52,7 +52,7 @@ export default function ShopResult({ isLoading, errorMessage, shopData, shopId }
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator size="large" color="#255cb3" />
         <Text style={styles.loadingText}>Caricamento...</Text>
       </View>
     );
@@ -202,10 +202,10 @@ const styles = StyleSheet.create({
   dataContainer: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 20 },
   sectionHeader: { marginTop: 20 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  categoryBadge: { backgroundColor: '#e7f3ff', color: '#007bff', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 5, fontSize: 12, fontWeight: 'bold' },
+  categoryBadge: { backgroundColor: '#e8f0fd', color: '#255cb3', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, fontSize: 12, fontWeight: '600' },
   favoriteButton: { padding: 8, backgroundColor: '#fff5f5', borderRadius: 20 },
   favoriteButtonActive: { backgroundColor: '#ffe3e3' },
-  shopName: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 5 },
+  shopName: { fontSize: 24, fontWeight: '700', color: '#1a2a4a', marginBottom: 5 },
   description: { fontSize: 15, color: '#6c757d' },
   divider: { height: 1, backgroundColor: '#eee', marginVertical: 20 },
   infoSection: { marginBottom: 20 },
@@ -215,33 +215,33 @@ const styles = StyleSheet.create({
   pickerValueText: { fontSize: 16, fontWeight: '500' },
   customPickerOptions: { backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', marginTop: 5, elevation: 5 },
   optionItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  optionItemActive: { backgroundColor: '#e7f3ff' },
+  optionItemActive: { backgroundColor: '#e8f0fd' },
   optionText: { color: '#444' },
-  optionTextActive: { color: '#007bff', fontWeight: 'bold' },
+  optionTextActive: { color: '#255cb3', fontWeight: '700' },
 
   fasceRow: { flexDirection: 'row', marginTop: 15, marginBottom: 15 },
   fasciaTab: { flex: 1, padding: 10, alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ddd', marginHorizontal: 2 },
-  fasciaTabActive: { backgroundColor: '#007bff', borderColor: '#007bff' },
+  fasciaTabActive: { backgroundColor: '#255cb3', borderColor: '#255cb3' },
   fasciaTabDisabled: { backgroundColor: '#f9f9f9', opacity: 0.4 },
   fasciaTabText: { fontSize: 12, fontWeight: '600' },
   fasciaTabTextActive: { color: '#fff' },
   fasciaTabTextDisabled: { color: '#999' },
 
   mapCardContainer: { borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#ddd' },
-  locationInfo: { padding: 15, backgroundColor: '#f0f7ff' },
-  locationLabel: { fontSize: 10, color: '#007bff', fontWeight: 'bold', textTransform: 'uppercase' },
+  locationInfo: { padding: 15, backgroundColor: '#e8f0fd' },
+  locationLabel: { fontSize: 10, color: '#255cb3', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   addressText: { fontSize: 15, fontWeight: '500', marginTop: 2 },
   mapWrapper: { height: 180, width: '100%' },
   map: { flex: 1 },
-  markerContainer: { height: 24, width: 24, backgroundColor: 'rgba(0,123,255,0.2)', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  markerCore: { height: 12, width: 12, backgroundColor: '#007bff', borderRadius: 6, borderWidth: 2, borderColor: '#fff' },
+  markerContainer: { height: 24, width: 24, backgroundColor: 'rgba(37,92,179,0.2)', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  markerCore: { height: 12, width: 12, backgroundColor: '#255cb3', borderRadius: 6, borderWidth: 2, borderColor: '#fff' },
 
-  emptyCard: { padding: 20, backgroundColor: '#f8f9fa', borderRadius: 10, alignItems: 'center' },
-  eventCard: { backgroundColor: '#f8f9fa', padding: 12, borderRadius: 8, marginBottom: 8 },
+  emptyCard: { padding: 20, backgroundColor: '#f5f7fa', borderRadius: 10, alignItems: 'center' },
+  eventCard: { backgroundColor: '#f5f7fa', padding: 12, borderRadius: 8, marginBottom: 8 },
   eventName: { fontWeight: 'bold' },
   noData: { color: '#aaa', fontStyle: 'italic' },
   loadingText: { marginTop: 10 },
   errorBox: { padding: 20, backgroundColor: '#fff5f5', borderRadius: 10 },
-  errorText: { color: '#fa5252', textAlign: 'center' },
+  errorText: { color: '#e53935', textAlign: 'center' },
   ratingContainer: { marginLeft: 10 }
 });

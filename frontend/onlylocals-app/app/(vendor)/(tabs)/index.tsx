@@ -288,7 +288,7 @@ export default function VetrinaScreen() {
           onPress={() => router.push('/(vendor)/notifications')}
           activeOpacity={0.7}
         >
-          <Ionicons name="notifications-outline" size={26} color="#1a2a4a" />
+          <Ionicons name="notifications-outline" size={26} color="#255cb3" />
           {unreadCount > 0 && (
             <View style={styles.bellBadge}>
               <Text style={styles.bellBadgeText}>

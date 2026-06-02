@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 50,
     backgroundColor: '#ffffff',
-    borderColor: '#ced4da',
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
@@ -76,13 +76,13 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#007bff',
-    borderRadius: 8,
+    backgroundColor: '#255cb3',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#a0c4ff',
+    backgroundColor: '#8aaad9',
   },
   buttonText: {
     color: '#fff',

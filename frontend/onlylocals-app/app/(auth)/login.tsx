@@ -61,12 +61,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f9fa', 
+    backgroundColor: '#f5f7fa',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a2a4a',
     marginBottom: 10,
   },
   backBtn: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#255cb3',
     fontWeight: '500',
   },
   registerButton: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   registerLink: {
-    color: '#007AFF',
+    color: '#255cb3',
     fontWeight: '600',
   },
 });
