@@ -20,7 +20,6 @@ import { UserProfile, userService } from '../../../services/userService';
 
 const SETTINGS = [
   { id: 1, label: 'Impostazioni', icon: 'settings-outline' as const, route: '/(vendor)/settings/settings' },
-  { id: 2, label: 'Aspetto',      icon: 'moon-outline' as const,      route: '/(vendor)/settings/appearance' },
 ];
 
 export default function ProfiloScreen() {
