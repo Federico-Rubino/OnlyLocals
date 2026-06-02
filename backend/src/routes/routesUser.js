@@ -661,4 +661,9 @@ router.patch('/notifications/:notificationId/read', authMiddleware.autenticateTo
 router.get('/me', authMiddleware.autenticateToken, userController.getUserData);
 
 router.get('/favorites', authMiddleware.autenticateToken, userController.getFavorites);
+
+router.post('/searches', authMiddleware.autenticateToken, userController.saveSearch);
+router.get('/searches', authMiddleware.autenticateToken, userController.getSavedSearches);
+router.delete('/searches', authMiddleware.autenticateToken, userController.removeSearch);
+
 module.exports = router;

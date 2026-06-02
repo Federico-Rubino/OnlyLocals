@@ -277,3 +277,53 @@ exports.getUserData = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+exports.saveSearch = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, categories } = req.body;
+    if (!name && (!categories || categories.length === 0)) {
+      return res.status(400).json({ success: false, message: 'name or categories required' });
+    }
+    const searches = await userService.saveSearch(userId, {
+      name: name || undefined,
+      categories: categories && categories.length > 0 ? categories : undefined,
+    });
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    if (err.message === 'Search already saved') {
+      return res.status(409).json({ success: false, message: err.message });
+    }
+    if (err.message === 'Only customers can save searches') {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getSavedSearches = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const searches = await userService.getSavedSearches(userId);
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.removeSearch = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { search } = req.body;
+    if (!search) {
+      return res.status(400).json({ success: false, message: 'search string required' });
+    }
+    const searches = await userService.removeSearch(userId, search);
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    if (err.message === 'Search not found') {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};

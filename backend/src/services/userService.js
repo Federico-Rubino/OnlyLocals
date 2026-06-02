@@ -292,3 +292,38 @@ exports.getUserData = async (userId) =>{
   return user;
 };
 
+exports.saveSearch = async (userId, searchData) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  if (user.role !== 'customer') throw new Error('Only customers can save searches');
+
+  const searchString = JSON.stringify(searchData);
+  if (user.searches.includes(searchString)) throw new Error('Search already saved');
+
+  user.searches.push(searchString);
+  await user.save();
+  return user.searches;
+};
+
+exports.getSavedSearches = async (userId) => {
+  const user = await User.findById(userId, 'searches');
+  if (!user) throw new Error('User not found');
+  return user.searches.map(s => {
+    try {
+      return { ...JSON.parse(s), raw: s };
+    } catch {
+      return { name: s, raw: s };
+    }
+  });
+};
+
+exports.removeSearch = async (userId, searchString) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  const idx = user.searches.indexOf(searchString);
+  if (idx === -1) throw new Error('Search not found');
+  user.searches.splice(idx, 1);
+  await user.save();
+  return user.searches;
+};
+
