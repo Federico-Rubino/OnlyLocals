@@ -132,3 +132,22 @@ export const redeemCard = async (barcode: string, descrizioneVantaggio: string):
   return response.data.data;
 };
 
+export interface FeedbackItem {
+  _id: string;
+  shopId: string;
+  authorId: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export const submitFeedback = async (shopId: string, rating: number, comment?: string): Promise<void> => {
+  await apiClient.post('/feedback', { shopId, rating, comment });
+};
+
+export const getFeedbacksByShop = async (shopId: string): Promise<FeedbackItem[]> => {
+  const response = await apiClient.get<{ success: boolean; data: FeedbackItem[] }>(`/feedback/shop/${shopId}`);
+  return response.data.data;
+};
+
