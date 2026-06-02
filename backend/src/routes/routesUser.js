@@ -993,4 +993,6 @@ router.get('/searches', authMiddleware.autenticateToken, userController.getSaved
 router.post('/searches', authMiddleware.autenticateToken, userController.saveSearch);
 router.delete('/searches', authMiddleware.autenticateToken, userController.removeSearch);
 
+router.delete('/account', authMiddleware.autenticateToken, userController.deleteAccount);
+
 module.exports = router;

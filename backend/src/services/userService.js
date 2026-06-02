@@ -327,3 +327,14 @@ exports.removeSearch = async (userId, searchString) => {
   return user.searches;
 };
 
+exports.deleteAccount = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  if (user.role === 'vendor' && user.vendorShop) {
+    await Shop.findByIdAndDelete(user.vendorShop);
+  }
+
+  await User.findByIdAndDelete(userId);
+};
+
