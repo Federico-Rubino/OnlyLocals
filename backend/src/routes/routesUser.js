@@ -666,4 +666,6 @@ router.post('/searches', authMiddleware.autenticateToken, userController.saveSea
 router.get('/searches', authMiddleware.autenticateToken, userController.getSavedSearches);
 router.delete('/searches', authMiddleware.autenticateToken, userController.removeSearch);
 
+router.delete('/account', authMiddleware.autenticateToken, userController.deleteAccount);
+
 module.exports = router;
