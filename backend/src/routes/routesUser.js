@@ -993,4 +993,200 @@ router.get('/searches', authMiddleware.autenticateToken, userController.getSaved
 router.post('/searches', authMiddleware.autenticateToken, userController.saveSearch);
 router.delete('/searches', authMiddleware.autenticateToken, userController.removeSearch);
 
+/**
+ * @openapi
+ * /api/users/forgot-password:
+ *   post:
+ *     summary: Request password recovery PIN
+ *     description: Sends a 6-digit PIN to the provided email address. The PIN expires in 15 minutes. Always returns 200 to avoid leaking whether the email is registered.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "mario.rossi@example.com"
+ *     responses:
+ *       200:
+ *         description: Request accepted (PIN sent if the email is registered)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "If that email is registered, a PIN has been sent."
+ *       400:
+ *         description: Missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "email required"
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/forgot-password', userController.forgotPassword);
+
+/**
+ * @openapi
+ * /api/users/verify-pin:
+ *   post:
+ *     summary: Verify recovery PIN
+ *     description: Validates the 6-digit PIN sent by email. On success returns a single-use recovery token (valid 15 minutes) to be used in reset-password. After 5 failed attempts the PIN is locked.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - pin
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "mario.rossi@example.com"
+ *               pin:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 6
+ *                 example: "482910"
+ *     responses:
+ *       200:
+ *         description: PIN verified — use the recoveryToken to reset the password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 recoveryToken:
+ *                   type: string
+ *                   description: Single-use token to pass to reset-password (valid 15 min)
+ *                   example: "a3f1c2...hex64chars"
+ *       400:
+ *         description: Missing fields, wrong PIN, or PIN expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid PIN"
+ *       404:
+ *         description: No active recovery request for this email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No active recovery request"
+ *       429:
+ *         description: Too many failed attempts — request a new PIN
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Too many attempts"
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/verify-pin', userController.verifyPin);
+
+/**
+ * @openapi
+ * /api/users/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     description: Sets a new password using the recovery token obtained from verify-pin. The token is single-use and expires after 15 minutes. All existing sessions are revoked on success.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - recoveryToken
+ *               - newPassword
+ *             properties:
+ *               recoveryToken:
+ *                 type: string
+ *                 example: "a3f1c2...hex64chars"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "NewStrongPassword456!"
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Password updated successfully"
+ *       400:
+ *         description: Missing fields or invalid/expired recovery token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid or expired recovery token"
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/reset-password', userController.resetPassword);
+
 module.exports = router;

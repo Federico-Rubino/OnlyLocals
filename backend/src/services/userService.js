@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const emailService = require('./emailService');
 
 
 exports.createUser = async (data) => {
@@ -325,5 +327,80 @@ exports.removeSearch = async (userId, searchString) => {
   user.searches.splice(idx, 1);
   await user.save();
   return user.searches;
+};
+
+// ── Password recovery ────────────────────────────────────────────────────────
+
+const PIN_TTL_MS           = 15 * 60 * 1000; // 15 min
+const RECOVERY_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 min after PIN verified
+const MAX_PIN_ATTEMPTS     = 5;
+
+exports.forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  // Always resolve without error to avoid leaking whether the email exists
+  if (!user) return;
+
+  const pin = crypto.randomInt(100000, 999999).toString();
+  const pinHash = await bcrypt.hash(pin, 10);
+
+  user.passwordReset = {
+    pin:           pinHash,
+    pinExpiry:     new Date(Date.now() + PIN_TTL_MS),
+    pinAttempts:   0,
+    recoveryToken: null,
+    recoveryTokenExpiry: null,
+  };
+  await user.save();
+
+  await emailService.sendPasswordRecoveryPin(email, pin);
+};
+
+exports.verifyPin = async (email, pin) => {
+  const user = await User.findOne({ email });
+  if (!user || !user.passwordReset?.pin) throw new Error('No active recovery request');
+
+  if (new Date() > user.passwordReset.pinExpiry) {
+    user.passwordReset = {};
+    await user.save();
+    throw new Error('PIN expired');
+  }
+
+  if (user.passwordReset.pinAttempts >= MAX_PIN_ATTEMPTS) {
+    throw new Error('Too many attempts');
+  }
+
+  const match = await bcrypt.compare(pin, user.passwordReset.pin);
+  if (!match) {
+    user.passwordReset.pinAttempts += 1;
+    await user.save();
+    throw new Error('Invalid PIN');
+  }
+
+  const recoveryToken = crypto.randomBytes(32).toString('hex');
+  user.passwordReset.pin          = null;
+  user.passwordReset.pinExpiry    = null;
+  user.passwordReset.pinAttempts  = 0;
+  user.passwordReset.recoveryToken        = recoveryToken;
+  user.passwordReset.recoveryTokenExpiry  = new Date(Date.now() + RECOVERY_TOKEN_TTL_MS);
+  await user.save();
+
+  return recoveryToken;
+};
+
+exports.resetPassword = async (recoveryToken, newPassword) => {
+  const user = await User.findOne({ 'passwordReset.recoveryToken': recoveryToken });
+  if (!user) throw new Error('Invalid or expired recovery token');
+
+  if (new Date() > user.passwordReset.recoveryTokenExpiry) {
+    user.passwordReset = {};
+    await user.save();
+    throw new Error('Invalid or expired recovery token');
+  }
+
+  user.auth.passwordHash  = await bcrypt.hash(newPassword, 10);
+  // Revoke all existing sessions so old tokens are invalid after a password reset
+  user.auth.refreshTokens = [];
+  user.passwordReset      = {};
+  await user.save();
 };
 
