@@ -45,6 +45,7 @@ export default function LoginScreen() {
         onIdentifierChange={setIdentifier}
         onPasswordChange={setPassword}
         onLogin={handleLogin}
+        onForgotPassword={() => router.push('/(auth)/forgot-password')}
         isLoading={isLoading}
       />
 
