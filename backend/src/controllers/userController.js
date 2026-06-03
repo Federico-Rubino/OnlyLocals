@@ -349,7 +349,8 @@ exports.forgotPassword = async (req, res) => {
     await userService.forgotPassword(email);
     res.status(200).json({ success: true, message: 'If that email is registered, a PIN has been sent.' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error('[forgotPassword]', err);
+    res.status(500).json({ success: false, message: 'Internal server error', detail: err.message });
   }
 };
 

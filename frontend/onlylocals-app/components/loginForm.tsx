@@ -7,16 +7,18 @@ interface LoginFormProps {
   onPasswordChange: (id: string) => void;
   onIdentifierChange: (id: string) => void;
   onLogin: () => void;
+  onForgotPassword?: () => void;
   isLoading: boolean;
 }
 
-export default function LoginForm({ 
-  identifier, 
+export default function LoginForm({
+  identifier,
   password,
-  onIdentifierChange, 
+  onIdentifierChange,
   onPasswordChange,
-  onLogin, 
-  isLoading 
+  onLogin,
+  onForgotPassword,
+  isLoading
 }: LoginFormProps) {
   
   const isDisabled = isLoading || identifier.trim() === '' || password.trim() === '';
@@ -46,11 +48,17 @@ export default function LoginForm({
         disabled={isDisabled}
         activeOpacity={0.8}
       >
-        {isLoading 
-          ? <ActivityIndicator color="#fff" /> 
+        {isLoading
+          ? <ActivityIndicator color="#fff" />
           : <Text style={styles.buttonText}>Login</Text>
         }
       </TouchableOpacity>
+
+      {onForgotPassword && (
+        <TouchableOpacity onPress={onForgotPassword} style={styles.forgotBtn}>
+          <Text style={styles.forgotText}>Hai dimenticato la password?</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -88,5 +96,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  forgotBtn: {
+    marginTop: 14,
+    alignSelf: 'center',
+  },
+  forgotText: {
+    color: '#255cb3',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

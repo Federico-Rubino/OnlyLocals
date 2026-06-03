@@ -28,5 +28,18 @@ export const authService = {
 
   logout: async () => {
     await tokenService.clearTokens();
-  }
+  },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    await apiClient.post('/users/forgot-password', { email });
+  },
+
+  verifyPin: async (email: string, pin: string): Promise<string> => {
+    const response = await apiClient.post('/users/verify-pin', { email, pin });
+    return response.data.recoveryToken;
+  },
+
+  resetPassword: async (recoveryToken: string, newPassword: string): Promise<void> => {
+    await apiClient.post('/users/reset-password', { recoveryToken, newPassword });
+  },
 };
