@@ -80,7 +80,15 @@ const userSchema = new mongoose.Schema({
 
   pushToken: { type: String, default: null },
 
-  notifications: [NotificationSchema]
+  notifications: [NotificationSchema],
+
+  passwordReset: {
+    pin:                  { type: String,  default: null },
+    pinExpiry:            { type: Date,    default: null },
+    pinAttempts:          { type: Number,  default: 0 },
+    recoveryToken:        { type: String,  default: null },
+    recoveryTokenExpiry:  { type: Date,    default: null },
+  }
 
 });
 

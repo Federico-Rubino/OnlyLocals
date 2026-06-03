@@ -340,3 +340,48 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'email required' });
+
+    await userService.forgotPassword(email);
+    res.status(200).json({ success: true, message: 'If that email is registered, a PIN has been sent.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.verifyPin = async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+    if (!email || !pin) return res.status(400).json({ success: false, message: 'email and pin required' });
+
+    const recoveryToken = await userService.verifyPin(email, pin);
+    res.status(200).json({ success: true, recoveryToken });
+  } catch (err) {
+    if (err.message === 'No active recovery request')
+      return res.status(404).json({ success: false, message: err.message });
+    if (err.message === 'PIN expired' || err.message === 'Invalid PIN')
+      return res.status(400).json({ success: false, message: err.message });
+    if (err.message === 'Too many attempts')
+      return res.status(429).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { recoveryToken, newPassword } = req.body;
+    if (!recoveryToken || !newPassword)
+      return res.status(400).json({ success: false, message: 'recoveryToken and newPassword required' });
+
+    await userService.resetPassword(recoveryToken, newPassword);
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    if (err.message === 'Invalid or expired recovery token')
+      return res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
