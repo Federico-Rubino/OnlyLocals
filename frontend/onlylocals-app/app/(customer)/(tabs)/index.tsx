@@ -12,7 +12,7 @@ import { getCurrentDayKey, getCurrentSlotKey } from '../../../utils/getCurrentSl
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
-const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
+const TRENTO_CENTER: [number, number] = [11.1217, 46.0748];
 
 
 const extractCurrentMarker = (
@@ -121,7 +121,7 @@ const HomeScreen = () => {
     setActiveResults([]);
     setShowBottomSheet(false);
     cameraRef.current?.setCamera({
-      centerCoordinate: userCoordinate ?? MILAN_CENTER,
+      centerCoordinate: userCoordinate ?? TRENTO_CENTER,
       zoomLevel: 14,
       animationMode: 'flyTo',
       animationDuration: 600,
@@ -163,7 +163,7 @@ const HomeScreen = () => {
           <Mapbox.Camera
             ref={cameraRef}
             zoomLevel={13}
-            centerCoordinate={MILAN_CENTER}
+            centerCoordinate={TRENTO_CENTER}
             animationMode="flyTo"
             animationDuration={2000}
           />

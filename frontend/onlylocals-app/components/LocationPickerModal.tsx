@@ -16,7 +16,7 @@ Logger.setLogCallback(log => {
   return false;
 });
 
-const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
+const TRENTO_CENTER: [number, number] = [11.1217, 46.0748];
 
 export interface PickedCoordinates {
   latitudine: number;
@@ -37,7 +37,7 @@ export default function LocationPickerModal({
   visible, initialCoordinate, dayLabel, slotLabel, onClose, onConfirm,
 }: Props) {
   const cameraRef = useRef<Mapbox.Camera>(null);
-  const centerRef = useRef<[number, number]>(initialCoordinate ?? MILAN_CENTER);
+  const centerRef = useRef<[number, number]>(initialCoordinate ?? TRENTO_CENTER);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingInitRef = useRef<[number, number] | null>(null);
 
@@ -56,7 +56,7 @@ export default function LocationPickerModal({
     }
     setQuery('');
     setSearchError('');
-    const init = initialCoordinate ?? MILAN_CENTER;
+    const init = initialCoordinate ?? TRENTO_CENTER;
     centerRef.current = init;
     pendingInitRef.current = init;
     reverseGeocode(init);
@@ -170,7 +170,7 @@ export default function LocationPickerModal({
           <Mapbox.Camera
             ref={cameraRef}
             zoomLevel={15}
-            centerCoordinate={initialCoordinate ?? MILAN_CENTER}
+            centerCoordinate={initialCoordinate ?? TRENTO_CENTER}
           />
         </Mapbox.MapView>
 
