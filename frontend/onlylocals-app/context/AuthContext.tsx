@@ -2,54 +2,91 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
+import { setSessionExpiredCallback } from '../services/api';
+import { userService } from '../services/userService';
 
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-// context/AuthContext.tsx
 type AuthContextType = {
   isLoggedIn: boolean;
   isLoading: boolean;
-  role: string | null;                   // ← add
+  role: string | null;
+  shopId: string | null;
   login: (credentials: { identifier: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  updateRole: (newRole: string) => Promise<void>;
+  updateShopId: (newShopId: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [role, setRole] = useState<string | null>(null);  // ← add
+  const [role, setRole] = useState<string | null>(null);
+  const [shopId, setShopId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkToken = async () => {
       const token = await tokenService.getAccessToken();
-      const savedRole = await tokenService.getRole();      // ← restore role
+      const savedRole = await tokenService.getRole();
+      const savedShopId = await tokenService.getShopId();
       setIsLoggedIn(!!token);
-      setRole(savedRole);                                  // ← restore role
+      setRole(savedRole);
+      setShopId(savedShopId);
       setIsLoading(false);
     };
     checkToken();
   }, []);
 
+  useEffect(() => {
+    setSessionExpiredCallback(() => {
+      setIsLoggedIn(false);
+      setRole(null);
+      setShopId(null);
+    });
+  }, []);
+
   const login = async (credentials: { identifier: string; password: string }) => {
-    const { role } = await authService.login(credentials); // ← get role
-    await tokenService.setRole(role);                      // ← persist it
+    const { role: newRole, shopId: newShopId } = await authService.login(credentials);
+    await tokenService.setRole(newRole);
+    await tokenService.setShopId(newShopId);
     setIsLoggedIn(true);
-    setRole(role);                                         // ← set in state
+    setRole(newRole);
+    setShopId(newShopId);
   };
 
   const logout = async () => {
     await authService.logout();
     setIsLoggedIn(false);
-    setRole(null);                                         // ← clear it
+    setRole(null);
+    setShopId(null);
+  };
+
+  const updateRole = async (newRole: string) => {
+    await tokenService.setRole(newRole);
+    setRole(newRole);
+  };
+
+  const updateShopId = async (newShopId: string) => {
+    await tokenService.setShopId(newShopId);
+    setShopId(newShopId);
+  };
+
+  const deleteAccount = async () => {
+    await userService.deleteAccount();
+    await tokenService.clearTokens();
+    setIsLoggedIn(false);
+    setRole(null);
+    setShopId(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole, updateShopId, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');

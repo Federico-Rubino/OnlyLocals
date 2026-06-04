@@ -10,16 +10,8 @@ export interface UserProfile {
 
 export const userService = {
   getProfile: async (): Promise<UserProfile> => {
-    try {
-      const response = await apiClient.get('/users/me');
-      console.log('STATUS:', response.status);
-      console.log('DATA:', JSON.stringify(response.data));
-      return response.data.data;
-    } catch (error: any) {
-      console.log('ERRORE STATUS:', error.response?.status);
-      console.log('ERRORE DATA:', JSON.stringify(error.response?.data));
-      throw error;
-    }
+    const response = await apiClient.get('/users/me');
+    return response.data.data;
   },
 
   updateProfile: async (data: Partial<UserProfile>): Promise<void> => {
@@ -33,5 +25,19 @@ export const userService = {
   getMyData: async (): Promise<UserProfile> => {
     const response = await apiClient.get('/users/me');
     return response.data.data;
+  },
+
+  getFavorites: async (): Promise<{ _id: string; name: string; category: string }[]> => {
+    const response = await apiClient.get('/users/favorites');
+    return response.data.data;
+  },
+
+  getFidelityCard: async (): Promise<{ barcode: string; shops: { shopName: string; punti: number }[] }> => {
+    const response = await apiClient.get('/users/fidelity/points');
+    return response.data.data;
+  },
+
+  deleteAccount: async (): Promise<void> => {
+    await apiClient.delete('/users/account');
   },
 };

@@ -1,18 +1,19 @@
 import Mapbox from '@rnmapbox/maps';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import SearchBar from '../../../components/SearchBar';
+import { Alert, StyleSheet, View } from 'react-native';
+import SearchBar, { SearchTrigger } from '../../../components/SearchBar';
 import FilterBar from '../../../components/FilterBar';
 import ShopResultsList from '../../../components/ShopResultsList';
 import { SearchResult } from '../../../services/searchService';
+import { userService } from '../../../services/userServices';
 import { getCurrentDayKey, getCurrentSlotKey } from '../../../utils/getCurrentSlot';
 import { locationPreference } from '../../../utils/locationPreference';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
-const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
+const TRENTO_CENTER: [number, number] = [11.1217, 46.0748];
 
 
 const extractCurrentMarker = (
@@ -21,7 +22,7 @@ const extractCurrentMarker = (
   const day = getCurrentDayKey();
   const slot = getCurrentSlotKey();
 
-  const slotData = shop.itinerario[day]?.[slot];
+  const slotData = shop.itinerario?.[day]?.[slot];
   if (!slotData) return null; // shop not active right now
 
   let lng: number | undefined;
@@ -50,8 +51,20 @@ const HomeScreen = () => {
   const [userCoordinate, setUserCoordinate] = useState<[number, number] | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [locationVisible, setLocationVisible] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState<SearchTrigger | null>(null);
 
   const router = useRouter();
+  const { q, cats, ts } = useLocalSearchParams<{ q?: string; cats?: string; ts?: string }>();
+
+  // Fire a search when we arrive here from a saved-search tap
+  useEffect(() => {
+    if (!ts) return;
+    setSearchTrigger({
+      query: q ?? '',
+      categories: cats ? cats.split('|').filter(Boolean) : [],
+      ts: Number(ts),
+    });
+  }, [ts]);
   // Request location permission and fly to user position on mount
   useEffect(() => {
     (async () => {
@@ -115,7 +128,7 @@ const HomeScreen = () => {
     setActiveResults([]);
     setShowBottomSheet(false);
     cameraRef.current?.setCamera({
-      centerCoordinate: userCoordinate ?? MILAN_CENTER,
+      centerCoordinate: userCoordinate ?? TRENTO_CENTER,
       zoomLevel: 14,
       animationMode: 'flyTo',
       animationDuration: 600,
@@ -124,10 +137,26 @@ const HomeScreen = () => {
 
   const handleCategoryToggle = async (categories: string[]) => {
     setSelectedCategories(categories);
-    
-    // API Call Example: 
+
+    // API Call Example:
     // const results = await searchService.fetchByFilters({ categories });
     // handleResultsFound(results);
+  };
+
+  const handleSaveSearch = async (name: string, categories: string[]) => {
+    try {
+      await userService.saveSearch(name || undefined, categories.length > 0 ? categories : undefined);
+      Alert.alert('Ricerca salvata', 'Puoi trovarla nella sezione Preferiti > Ricerche.');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 409) {
+        Alert.alert('Già salvata', 'Questa ricerca è già nei tuoi preferiti.');
+      } else if (status === 401 || status === 403) {
+        Alert.alert('Accesso richiesto', 'Devi essere loggato per salvare una ricerca.');
+      } else {
+        Alert.alert('Errore', 'Impossibile salvare la ricerca.');
+      }
+    }
   };
   return (
     <View style={styles.page}>
@@ -141,7 +170,7 @@ const HomeScreen = () => {
           <Mapbox.Camera
             ref={cameraRef}
             zoomLevel={13}
-            centerCoordinate={MILAN_CENTER}
+            centerCoordinate={TRENTO_CENTER}
             animationMode="flyTo"
             animationDuration={2000}
           />
@@ -171,6 +200,8 @@ const HomeScreen = () => {
           <SearchBar
             onResultsFound={handleResultsFound}
             onClear={handleClear}
+            onSaveSearch={handleSaveSearch}
+            searchTrigger={searchTrigger}
           />
           
         {/* Bottom sheet with results list */}

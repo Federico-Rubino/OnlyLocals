@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { getNotifications } from '../../../services/notificationService';
 import {
   ActivityIndicator,
   Alert,
@@ -17,11 +18,36 @@ import {
 } from 'react-native';
 import { useAuth } from '../../../context/AuthContext';
 import { addEvento, addPromozione, deleteEvento, deletePromozione, getShopById, updateShop } from '../../../services/shopServices';
+import { Itinerary, DayItinerary } from '../../../types/shop';
 
 type Promozione = { id: number; nome: string; sconto: string; };
-type Evento = { id: number; titolo: string; descrizione: string; };
+type Evento = { id: number; titolo: string; descrizione: string; data: string; };
 type BottomSheetType = 'promozioni' | 'eventi' | null;
 type FormType = 'nuovaPromo' | 'eliminaPromo' | 'nuovoEvento' | 'eliminaEvento' | null;
+
+const GIORNI: { key: keyof Itinerary; short: string }[] = [
+  { key: 'lunedi',    short: 'Lun' },
+  { key: 'martedi',   short: 'Mar' },
+  { key: 'mercoledi', short: 'Mer' },
+  { key: 'giovedi',   short: 'Gio' },
+  { key: 'venerdi',   short: 'Ven' },
+  { key: 'sabato',    short: 'Sab' },
+  { key: 'domenica',  short: 'Dom' },
+];
+
+const SLOT_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  mattina:    'sunny-outline',
+  pomeriggio: 'partly-sunny-outline',
+  sera:       'moon-outline',
+};
+
+function itinerarioAttivi(it: Itinerary): number {
+  return GIORNI.reduce((tot, { key }) => {
+    const day = it[key] as DayItinerary | undefined;
+    if (!day) return tot;
+    return tot + (['mattina', 'pomeriggio', 'sera'] as const).filter(s => day[s]?.location).length;
+  }, 0);
+}
 
 //const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
 
@@ -49,13 +75,39 @@ export default function VetrinaScreen() {
   const [eventoDate, setEventoDate] = useState('');
   const [eventoToDelete, setEventoToDelete] = useState('');
 
+  const [unreadCount, setUnreadCount] = useState(0);
   const [shopModalVisible, setShopModalVisible] = useState(false);
   const [editShopData, setEditShopData] = useState({ name: shopName, description: shopDescription });
+  const [itinerario, setItinerario] = useState<Itinerary | null>(null);
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const notifications = await getNotifications();
+      setUnreadCount(notifications.filter(n => !n.read).length);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadCount();
+      if (shopId) {
+        getShopById(shopId)
+          .then(shop => setItinerario(shop.itinerario ?? null))
+          .catch(() => {});
+      }
+    }, [fetchUnreadCount, shopId])
+  );
 
      useEffect(() => {
     const loadShop = async () => {
+      if (!shopId) {
+        Alert.alert('Errore', 'Nessun negozio associato a questo account.');
+        setLoadingData(false);
+        return;
+      }
       try {
-        // prendi shopId dal context auth
         const shop = await getShopById(shopId);
 
         setShopName(shop.name);
@@ -70,7 +122,9 @@ export default function VetrinaScreen() {
           id: i,
           titolo: e.name,
           descrizione: e.description,
+          data: e.date ? e.date.split('T')[0] : '',
         })));
+        setItinerario(shop.itinerario ?? null);
       } catch (err: any) {
         if (err.response?.status === 401) {
           router.replace('/(auth)/login');
@@ -150,17 +204,26 @@ export default function VetrinaScreen() {
       return;
     }
 
+    const normalizedDate = eventoDate.trim();
+    const isDuplicate = eventi.some(
+      e => e.descrizione === eventoDesc.trim() && e.data === normalizedDate
+    );
+    if (isDuplicate) {
+      Alert.alert('Attenzione', 'Esiste già un evento con la stessa descrizione e data.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Forza formato ISO completo
-      const dataISO = `${eventoDate.trim()}T10:00:00.000Z`;
-      
+      const dataISO = `${normalizedDate}T10:00:00.000Z`;
+
       await addEvento({
         name: eventoTitolo.trim(),
         description: eventoDesc.trim(),
         date: dataISO,
       });
-      setEventi(prev => [...prev, { id: Date.now(), titolo: eventoTitolo.trim(), descrizione: eventoDesc.trim() }]);
+      setEventi(prev => [...prev, { id: Date.now(), titolo: eventoTitolo.trim(), descrizione: eventoDesc.trim(), data: normalizedDate }]);
       closeForm();
       Alert.alert('Successo', 'Evento aggiunto!');
     } catch (err: any) {
@@ -171,7 +234,6 @@ export default function VetrinaScreen() {
   };
 
   const eliminaEvento = async () => {
-    console.log('Elimino evento:', eventoToDelete);
     if (!eventoToDelete.trim()) {
       Alert.alert('Attenzione', 'Seleziona un evento da eliminare.');
       return;
@@ -219,13 +281,68 @@ export default function VetrinaScreen() {
     >
       <StatusBar barStyle="dark-content" />
 
-      <Text style={styles.pageTitle}>Vetrina</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.pageTitle}>Vetrina</Text>
+        <TouchableOpacity
+          style={styles.bellBtn}
+          onPress={() => router.push('/(vendor)/notifications')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="notifications-outline" size={26} color="#255cb3" />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
 
       {/* Card Negozio */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{shopName}</Text>
         <Text style={styles.cardText}>{shopDescription}</Text>
         <TouchableOpacity style={styles.editBtn} onPress={()=>setShopModalVisible(true)}>
+          <Ionicons name="pencil-outline" size={18} color="#888" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Card Itinerario */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Orari & Posizioni</Text>
+        {itinerario && itinerarioAttivi(itinerario) > 0 ? (
+          <View style={styles.itinDaysRow}>
+            {GIORNI.map(({ key, short }) => {
+              const day = itinerario[key] as DayItinerary | undefined;
+              const activeSlots = (['mattina', 'pomeriggio', 'sera'] as const).filter(
+                s => day?.[s]?.location
+              );
+              return (
+                <View key={key} style={[styles.itinDayChip, activeSlots.length > 0 && styles.itinDayChipActive]}>
+                  <Text style={[styles.itinDayLabel, activeSlots.length > 0 && styles.itinDayLabelActive]}>
+                    {short}
+                  </Text>
+                  {activeSlots.length > 0 && (
+                    <View style={styles.itinSlotIcons}>
+                      {activeSlots.map(s => (
+                        <Ionicons key={s} name={SLOT_ICONS[s]} size={9} color="#fff" />
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.itinEmpty}>Nessun orario impostato</Text>
+        )}
+        {itinerario && itinerarioAttivi(itinerario) > 0 && (
+          <Text style={styles.itinCount}>
+            {itinerarioAttivi(itinerario)} {itinerarioAttivi(itinerario) === 1 ? 'fascia oraria' : 'fasce orarie'} impostate
+          </Text>
+        )}
+        <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/(vendor)/itinerario')}>
           <Ionicons name="pencil-outline" size={18} color="#888" />
         </TouchableOpacity>
       </View>
@@ -456,7 +573,11 @@ export default function VetrinaScreen() {
 
 const styles = StyleSheet.create({
   container:        { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  pageTitle:        { fontSize: 26, fontWeight: '700', color: '#1a2a4a', marginBottom: 20, letterSpacing: -0.3 },
+  titleRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  pageTitle:        { fontSize: 26, fontWeight: '700', color: '#1a2a4a', letterSpacing: -0.3 },
+  bellBtn:          { position: 'relative', padding: 4 },
+  bellBadge:        { position: 'absolute', top: 0, right: 0, backgroundColor: '#e53935', borderRadius: 8, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 2 },
+  bellBadgeText:    { color: '#fff', fontSize: 10, fontWeight: '700' },
   card:             { backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.10)', padding: 14, paddingRight: 48, marginBottom: 12 },
   cardTitle:        { fontSize: 16, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
   cardText:         { fontSize: 13, color: '#6b6b6b', lineHeight: 19 },
@@ -469,6 +590,14 @@ const styles = StyleSheet.create({
   eventiList:       { marginTop: 8, gap: 8 },
   eventoTitolo:     { fontSize: 13, color: '#1a1a1a' },
   eventoDesc:       { fontSize: 12, color: '#aaaaaa', marginTop: 2 },
+  itinDaysRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  itinDayChip:      { width: 36, height: 40, borderRadius: 8, backgroundColor: '#f0f2f5', alignItems: 'center', justifyContent: 'center', gap: 2 },
+  itinDayChipActive:{ backgroundColor: '#1a2a4a' },
+  itinDayLabel:     { fontSize: 11, fontWeight: '600', color: '#9aa0a6' },
+  itinDayLabelActive:{ color: '#fff' },
+  itinSlotIcons:    { flexDirection: 'row', gap: 1 },
+  itinEmpty:        { fontSize: 13, color: '#aaa', marginTop: 2 },
+  itinCount:        { fontSize: 11, color: '#6b6b6b', marginTop: 8 },
   overlay:          { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
   sheet:            { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 22, gap: 12 },
   sheetTitle:       { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },

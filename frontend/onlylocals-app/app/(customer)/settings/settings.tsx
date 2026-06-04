@@ -12,7 +12,7 @@ import { locationPreference } from '../../../utils/locationPreference';
 
 
 export default function SettingsScreen() {
-  const { logout } = useAuth();
+  const { deleteAccount } = useAuth();
   const [locationEnabled, setLocationEnabled] = useState(false);
 
   useEffect(() => {
@@ -25,14 +25,19 @@ export default function SettingsScreen() {
 
   const handleLocationToggle = async (value: boolean) => {
     if (value) {
-      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      try {
+        await Location.enableNetworkProviderAsync();
+      } catch {
+        // iOS non supporta enableNetworkProviderAsync, ignorato
+      }
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         await locationPreference.set(true);
         setLocationEnabled(true);
-      } else if (!canAskAgain) {
+      } else {
         Alert.alert(
-          'Permesso negato',
-          'Per abilitare la posizione vai nelle impostazioni del dispositivo.',
+          'Permesso necessario',
+          'Per usare la posizione abilita il permesso nelle impostazioni del dispositivo.',
           [
             { text: 'Annulla', style: 'cancel' },
             { text: 'Apri impostazioni', onPress: () => Linking.openSettings() },
@@ -40,14 +45,40 @@ export default function SettingsScreen() {
         );
       }
     } else {
-      await locationPreference.set(false);
-      setLocationEnabled(false);
+      Alert.alert(
+        'Disattiva posizione',
+        'Come vuoi procedere?',
+        [
+          { text: 'Annulla', style: 'cancel' },
+          {
+            text: 'Disattiva per l\'applicazione',
+            onPress: async () => {
+              await locationPreference.set(false);
+              setLocationEnabled(false);
+            },
+          },
+          {
+            text: 'Cambia preferenze dalle impostazioni',
+            onPress: () => Linking.openSettings(),
+          },
+        ],
+      );
     }
   };
 
   const handleDownloadData = async () => {
     try {
-      const data = await userService.getMyData();
+      const [data, favorites, fidelity] = await Promise.all([
+        userService.getMyData(),
+        userService.getFavorites(),
+        userService.getFidelityCard().catch(() => null),
+      ]);
+      const favoritesLine = favorites.length > 0
+        ? favorites.map(s => `  - ${s.name} (${s.category})`).join('\n')
+        : '  Nessun negozio salvato';
+      const fidelityLines = fidelity && fidelity.shops.length > 0
+        ? [`  Barcode: ${fidelity.barcode}`, ...fidelity.shops.map(s => `  - ${s.shopName}: ${s.punti} punti`)].join('\n')
+        : '  Nessun punto accumulato';
       const text = [
         'I MIEI DATI - OnlyLocals',
         '------------------------',
@@ -56,6 +87,12 @@ export default function SettingsScreen() {
         `Email: ${data.email}`,
         `Data di nascita: ${new Date(data.bornDate).toLocaleDateString('it-IT')}`,
         `Ruolo: ${data.role}`,
+        '',
+        'Negozi preferiti:',
+        favoritesLine,
+        '',
+        'Punti fedeltà:',
+        fidelityLines,
       ].join('\n');
       await Share.share({ message: text, title: 'I miei dati OnlyLocals' });
     } catch {
@@ -66,30 +103,24 @@ export default function SettingsScreen() {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Elimina account',
-      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.',
+      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile e tutti i tuoi dati verranno cancellati.',
       [
         { text: 'Annulla', style: 'cancel' },
         {
           text: 'Elimina',
           style: 'destructive',
-          onPress: () => Alert.alert('Funzionalità', 'Contatta il supporto per eliminare il tuo account.'),
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              router.replace('/(auth)/login');
+            } catch (err: any) {
+              console.log('deleteAccount error:', JSON.stringify(err?.response?.data), err?.response?.status, err?.message);
+              Alert.alert('Errore', "Impossibile eliminare l'account. Riprova più tardi.");
+            }
+          },
         },
-      ],
+      ]
     );
-  };
-
-  const handleLogout = async () => {
-    Alert.alert('Esci', "Vuoi davvero uscire dall'account?", [
-      { text: 'Annulla', style: 'cancel' },
-      {
-        text: 'Esci',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
   };
 
   return (
@@ -137,11 +168,6 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#e53935" />
-        <Text style={styles.logoutText}>Esci dall'account</Text>
-      </TouchableOpacity>
-
       <View style={{ height: 32 }} />
     </ScrollView>
   );
@@ -149,7 +175,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  pageTitle:    { fontSize: 26, fontWeight: 'bold', marginBottom: 20, marginTop: 8 },
+  pageTitle:    { fontSize: 26, fontWeight: '700', color: '#1a2a4a', marginBottom: 20, marginTop: 8 },
   sectionTitle: { fontSize: 12, fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginTop: 16, marginLeft: 4 },
   card:         { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },

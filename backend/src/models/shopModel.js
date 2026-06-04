@@ -12,7 +12,9 @@ const PositionSchema = new mongoose.Schema({
       required: true
     }
   },
-  indirizzo: String
+  indirizzo: String,
+  oraInizio: String, // orario di apertura della fascia, formato "HH:MM"
+  oraFine: String    // orario di chiusura della fascia, formato "HH:MM"
 }, { _id: false });
 
 const DaySchema = new mongoose.Schema({
@@ -36,7 +38,6 @@ const PromotionSchema = new mongoose.Schema({
 
 const VantaggioSchema = new mongoose.Schema({
   descrizione: String,
-  valore: Number,
   sogliaPunti: Number
 }, { _id: false });
 
@@ -44,6 +45,8 @@ const FidelityCardSchema = new mongoose.Schema({
   numeroUtenti: Number,
   ultimaModifica: Date,
   modificabile: Boolean,
+  tassoConversione: Number,
+  modo: { type: String, enum: ['visita', 'acquisto'] },
   vantaggi: [VantaggioSchema]
 }, { _id: false });
 
@@ -53,9 +56,22 @@ const StatisticheSchema = new mongoose.Schema({
     data: Date,
     valore: Number
   }],
-  storicoFeedback: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Feedback'
+  storicoFeedback: [{       
+    voto: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5
+    },
+    commento: String,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    data: {
+      type: Date,
+      default: Date.now
+    }
   }],
   votoMedio: Number,
   totaleFeedback: Number,

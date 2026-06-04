@@ -2,27 +2,35 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
-  Text, TextInput, TouchableOpacity, View
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
 import { UserProfile, userService } from '../../../services/userService';
 
-
- const SETTINGS = [
-    { id: 1, label: 'settings',     icon: 'settings-outline', route: '/settings/settings' },
-    { id: 2, label: 'appearance',   icon: 'moon-outline',     route: '/settings/appearance' },  ];
+const SETTINGS = [
+  { id: 1, label: 'Impostazioni', icon: 'settings-outline' as const,  route: '/settings/settings' },
+];
 
 export default function ProfileScreen() {
- 
-  
+  const { logout } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState({
-    name: '', surname: '', email: '', bornDate: ''
+    name: '', surname: '', email: '', bornDate: '',
   });
-
-
 
   const loadProfile = useCallback(async () => {
     try {
@@ -32,12 +40,11 @@ export default function ProfileScreen() {
         name: data.name,
         surname: data.surname,
         email: data.email,
-        bornDate: data.bornDate
+        bornDate: data.bornDate,
       });
     } catch (err: any) {
-      //se non auth redirect to login page
       if (err.response?.status === 401) {
-        router.replace('/(auth)/login'); 
+        router.replace('/(auth)/login');
         return;
       }
       Alert.alert('Errore', 'Impossibile caricare il profilo');
@@ -46,135 +53,219 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   const handleSave = async () => {
+    if (!editData.name.trim() || !editData.surname.trim() || !editData.email.trim()) {
+      Alert.alert('Attenzione', 'Nome, cognome ed email sono obbligatori.');
+      return;
+    }
+    setSaving(true);
     try {
       await userService.updateProfile(editData);
       setUser(prev => prev ? { ...prev, ...editData } : prev);
       setModalVisible(false);
       Alert.alert('Successo', 'Profilo aggiornato!');
-    } catch (err) {
+    } catch {
       Alert.alert('Errore', 'Impossibile aggiornare il profilo');
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Sei sicuro di voler uscire?', [
+      { text: 'Annulla', style: 'cancel' },
+      {
+        text: 'Esci',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(customer)/(tabs)');
+        },
+      },
+    ]);
+  };
+
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} color="#1a2a4a" />;
   if (!user) return <Text style={styles.error}>Utente non trovato</Text>;
 
-  const birthDate = new Date(user.bornDate).toLocaleDateString('it-IT');
+  const initials = `${user.name?.[0] ?? ''}${user.surname?.[0] ?? ''}`.toUpperCase();
+  const birthDate = user.bornDate
+    ? new Date(user.bornDate).toLocaleDateString('it-IT')
+    : '—';
 
   return (
-    <ScrollView style={styles.container}
-    contentContainerStyle={{paddingTop: 50}}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: 50, paddingBottom: 32 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <StatusBar barStyle="dark-content" />
 
-      <View style={styles.header}>
+      <Text style={styles.pageTitle}>Profilo</Text>
+
+      {/* Header card */}
+      <View style={styles.headerCard}>
         <View style={styles.avatar}>
-          <Ionicons name="person" size={36} color="#fff" />
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
-        <Text style={styles.name}>{user.name} {user.surname}</Text>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Ionicons name="pencil-outline" size={20} color="#555" />
+        <View style={styles.headerInfo}>
+          <Text style={styles.fullName}>{user.name} {user.surname}</Text>
+          <Text style={styles.role}>Cliente</Text>
+        </View>
+        <TouchableOpacity style={styles.editIconBtn} onPress={() => setModalVisible(true)}>
+          <Ionicons name="pencil-outline" size={20} color="#1a2a4a" />
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>Informazioni profilo:</Text>
-      <Text style={styles.info}><Text style={styles.bold}>E-mail: </Text>{user.email}</Text>
-      <Text style={styles.info}><Text style={styles.bold}>Data di nascita: </Text>{birthDate}</Text>
+      {/* Info section */}
+      <Text style={styles.sectionTitle}>Informazioni personali</Text>
+      <View style={styles.card}>
+        <InfoRow icon="mail-outline" label="Email" value={user.email} />
+        <View style={styles.rowDivider} />
+        <InfoRow icon="calendar-outline" label="Data di nascita" value={birthDate} />
+      </View>
 
-      <View style={styles.divider} />
+      {/* Settings section */}
+      <Text style={styles.sectionTitle}>Impostazioni</Text>
+      <View style={styles.card}>
+        {SETTINGS.map((item, index) => (
+          <View key={item.id}>
+            {index > 0 && <View style={styles.rowDivider} />}
+            <TouchableOpacity
+              style={styles.settingsRow}
+              onPress={() => router.push(item.route as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={item.icon} size={18} color="#6b6b6b" style={{ marginRight: 10 }} />
+              <Text style={styles.settingsLabel}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#ccc" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
 
-      {SETTINGS.map((item) => (
-        <TouchableOpacity key={item.id} style={styles.row}
-        onPress={() => item.route && router.push(item.route as any)}>
-          <Text style={styles.rowLabel}>{item.label}</Text>
-          <Ionicons name={item.icon as any} size={22} color="#333" />
-        </TouchableOpacity>
-      ))}
+      {/* Logout */}
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+        <Ionicons name="log-out-outline" size={20} color="#e74c3c" />
+        <Text style={styles.logoutText}>Esci dall'account</Text>
+      </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+      {/* Edit modal — bottom sheet */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Modifica profilo</Text>
 
-            <Text style={styles.modalTitle}>Modifica profilo</Text>
-
-            <Text style={styles.label}>Nome</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.name}
-              onChangeText={v => setEditData(p => ({ ...p, name: v }))}
-            />
-
-            <Text style={styles.label}>Cognome</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.surname}
-              onChangeText={v => setEditData(p => ({ ...p, surname: v }))}
-            />
-
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.email}
-              onChangeText={v => setEditData(p => ({ ...p, email: v }))}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Data di nascita</Text>
-            <TextInput
-              style={styles.input}
-              value={editData.bornDate}
-              onChangeText={v => setEditData(p => ({ ...p, bornDate: v }))}
-              placeholder="YYYY-MM-DD"
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelText}>Annulla</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.saveBtn]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveText}>Salva</Text>
-              </TouchableOpacity>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Nome</Text>
+              <TextInput
+                style={styles.input}
+                value={editData.name}
+                onChangeText={v => setEditData(p => ({ ...p, name: v }))}
+                autoCapitalize="words"
+              />
             </View>
 
-          </View>
-        </View>
-      </Modal>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Cognome</Text>
+              <TextInput
+                style={styles.input}
+                value={editData.surname}
+                onChangeText={v => setEditData(p => ({ ...p, surname: v }))}
+                autoCapitalize="words"
+              />
+            </View>
 
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={editData.email}
+                onChangeText={v => setEditData(p => ({ ...p, email: v }))}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Data di nascita (YYYY-MM-DD)</Text>
+              <TextInput
+                style={styles.input}
+                value={editData.bornDate}
+                onChangeText={v => setEditData(p => ({ ...p, bornDate: v }))}
+                placeholder="es. 1990-05-21"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              <Text style={styles.primaryBtnText}>{saving ? 'Salvataggio...' : 'Salva'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+              <Text style={styles.cancelText}>Annulla</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScrollView>
   );
 }
 
+function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Ionicons name={icon as any} size={18} color="#6b6b6b" style={{ marginRight: 10 }} />
+      <View>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  header:         { flexDirection: 'row', alignItems: 'center', backgroundColor: '#b8c9e0', borderRadius: 16, padding: 16, marginBottom: 20 },
-  avatar:         { width: 52, height: 52, borderRadius: 26, backgroundColor: '#7a9cbf', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  name:           { flex: 1, fontSize: 18, fontWeight: 'bold' },
-  sectionTitle:   { fontSize: 14, fontWeight: 'bold', marginBottom: 4 },
-  info:           { fontSize: 14, marginBottom: 2 },
-  bold:           { fontWeight: 'bold' },
-  divider:        { height: 1, backgroundColor: '#ddd', marginVertical: 16 },
-  row:            { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginVertical: 4 },
-  rowLabel:       { fontSize: 15 },
-  error:          { flex: 1, textAlign: 'center', marginTop: 40 },
-  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
-  modalContainer: { backgroundColor: '#fff', borderRadius: 16, padding: 24 },
-  modalTitle:     { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
-  label:          { fontSize: 13, color: '#555', marginBottom: 4 },
-  input:          { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 15 },
-  modalButtons:   { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  modalBtn:       { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
-  cancelBtn:      { backgroundColor: '#f0f0f0', marginRight: 8 },
-  saveBtn:        { backgroundColor: '#255cb3', marginLeft: 8 },
-  cancelText:     { color: '#333', fontWeight: 'bold' },
-  saveText:       { color: '#fff', fontWeight: 'bold' },
+  container:       { flex: 1, backgroundColor: '#f5f7fa', paddingHorizontal: 16 },
+  pageTitle:       { fontSize: 26, fontWeight: '700', color: '#1a2a4a', letterSpacing: -0.3, marginBottom: 20 },
+  error:           { flex: 1, textAlign: 'center', marginTop: 40, color: '#888' },
+
+  headerCard:      { backgroundColor: '#1a2a4a', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+  avatar:          { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  avatarText:      { color: '#fff', fontSize: 20, fontWeight: '700' },
+  headerInfo:      { flex: 1 },
+  fullName:        { color: '#fff', fontSize: 17, fontWeight: '700' },
+  role:            { color: 'rgba(255,255,255,0.65)', fontSize: 13, marginTop: 2 },
+  editIconBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+
+  sectionTitle:    { fontSize: 13, fontWeight: '600', color: '#6b6b6b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  card:            { backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.10)', paddingHorizontal: 16, marginBottom: 24 },
+  infoRow:         { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  rowDivider:      { height: 0.5, backgroundColor: 'rgba(0,0,0,0.08)' },
+  infoLabel:       { fontSize: 11, color: '#6b6b6b' },
+  infoValue:       { fontSize: 14, color: '#1a1a1a', fontWeight: '500', marginTop: 2 },
+
+  settingsRow:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
+  settingsLabel:   { flex: 1, fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
+
+  logoutBtn:       { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 14, borderWidth: 0.5, borderColor: 'rgba(231,76,60,0.3)', padding: 16 },
+  logoutText:      { fontSize: 15, fontWeight: '600', color: '#e74c3c' },
+
+  overlay:         { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  sheet:           { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 22, gap: 12 },
+  sheetTitle:      { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
+  field:           { gap: 4 },
+  fieldLabel:      { fontSize: 12, color: '#6b6b6b' },
+  input:           { borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.22)', borderRadius: 8, padding: 10, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fff' },
+  primaryBtn:      { backgroundColor: '#1a2a4a', borderRadius: 10, padding: 13, alignItems: 'center', marginTop: 4 },
+  primaryBtnText:  { color: '#fff', fontSize: 15, fontWeight: '600' },
+  cancelBtn:       { alignItems: 'center', padding: 10 },
+  cancelText:      { fontSize: 14, color: '#6b6b6b' },
 });

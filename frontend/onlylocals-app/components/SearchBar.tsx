@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -20,17 +20,26 @@ const CATEGORIES = [
   'Servizi & Professionisti'
 ];
 
+export interface SearchTrigger {
+  query: string;
+  categories: string[];
+  ts: number; // changes each time so the effect always fires
+}
+
 interface SearchBarProps {
   onResultsFound: (results: SearchResult[]) => void;
   onClear: () => void;
+  onSaveSearch?: (name: string, categories: string[]) => void;
+  searchTrigger?: SearchTrigger | null;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSearch, searchTrigger }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const consumedTs = useRef<number>(0);
 
   // Function to update Map Results (Immediate)
   const updateMapResults = async (query: string, categories: string[]) => {
@@ -70,6 +79,28 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear }) => {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Effect for external search trigger (from saved searches)
+  useEffect(() => {
+    if (!searchTrigger || searchTrigger.ts === consumedTs.current) return;
+    consumedTs.current = searchTrigger.ts;
+
+    const { query, categories } = searchTrigger;
+    setSearchQuery(query);
+    setSelectedCategories(categories);
+    setShowSuggestions(false);
+
+    if (!query.trim() && categories.length === 0) { onClear(); return; }
+
+    setIsLoading(true);
+    searchShop({
+      name: query.trim() || undefined,
+      category: categories.length > 0 ? categories : undefined,
+    })
+      .then(res => { onResultsFound(res.data || []); })
+      .catch(err => console.error('Triggered search failed', err))
+      .finally(() => setIsLoading(false));
+  }, [searchTrigger]);
 
   // Handler for Categories: Updates map ONLY (No dropdown)
   const toggleCategory = async (cat: string) => {
@@ -132,7 +163,19 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear }) => {
         </ScrollView>
       </View>
 
-      {/* 3. SUGGESTIONS (Only visible when typing) */}
+      {/* 3. SAVE SEARCH BUTTON (visible when there's an active search) */}
+      {onSaveSearch && (searchQuery.length > 0 || selectedCategories.length > 0) && (
+        <TouchableOpacity
+          style={styles.saveBtn}
+          onPress={() => onSaveSearch(searchQuery, selectedCategories)}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="bookmark-outline" size={14} color="#fff" />
+          <Text style={styles.saveBtnText}>Salva ricerca</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* 4. SUGGESTIONS (Only visible when typing) */}
       {showSuggestions && searchQuery.length > 0 && (
         <View style={styles.dropdown}>
           {suggestions.length > 0 ? (
@@ -197,9 +240,22 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     elevation: 2,
   },
-  activeChip: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  activeChip: { backgroundColor: '#255cb3', borderColor: '#255cb3' },
   chipText: { fontSize: 12, color: '#4B5563', fontWeight: '600' },
   activeText: { color: 'white' },
+  saveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#255cb3',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+    gap: 5,
+    elevation: 2,
+  },
+  saveBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   dropdown: {
     backgroundColor: 'white',
     borderRadius: 12,

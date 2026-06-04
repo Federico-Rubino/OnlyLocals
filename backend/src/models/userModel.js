@@ -1,6 +1,27 @@
 const mongoose = require('mongoose');
 const FidelityCardSchema = require('./fidelityCardModel.js');
 
+const NotificationSchema = new mongoose.Schema({
+  type: { type: String, enum: ['event', 'promotion', 'feedback'], default: 'event' },
+  shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop' },
+  shopName: String,
+  // event fields
+  eventName: String,
+  eventDescription: String,
+  eventDate: Date,
+  // promotion fields
+  promotionDescription: String,
+  promotionValue: String,
+  promotionStartDate: Date,
+  promotionEndDate: Date,
+  // feedback fields
+  feedbackAuthorName: String,
+  feedbackRating: Number,
+  feedbackComment: String,
+  sentAt: { type: Date, default: Date.now },
+  read: { type: Boolean, default: false }
+});
+
 const userSchema = new mongoose.Schema({
 
   name: {
@@ -51,10 +72,22 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
-  // VENDOR DATA 
+  // VENDOR DATA
   vendorShop: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Shop'
+  },
+
+  pushToken: { type: String, default: null },
+
+  notifications: [NotificationSchema],
+
+  passwordReset: {
+    pin:                  { type: String,  default: null },
+    pinExpiry:            { type: Date,    default: null },
+    pinAttempts:          { type: Number,  default: 0 },
+    recoveryToken:        { type: String,  default: null },
+    recoveryTokenExpiry:  { type: Date,    default: null },
   }
 
 });
