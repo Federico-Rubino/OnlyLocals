@@ -77,8 +77,8 @@ exports.logout = async (req, res) => {
     
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error during logout"});
-  }  
+    res.status(500).json({ message: "Internal server error during logout" });
+  }
 };
 
 exports.addShopToFavorites = async (req, res) => {
@@ -124,12 +124,11 @@ exports.removeShopFromFavorites = async (req, res) => {
       results: updatedFavorites
     });
   } catch (err) {
-    console.error(err);
-
     if (err.message === "Shop not in favorites") {
       return res.status(400).json({ success: false, message: err.message });
     }
 
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
@@ -146,10 +145,11 @@ exports.setAsCustomer = async (req, res) => {
       results: updatedUser
     });
   } catch (err) {
-    console.error(err);
     if (err.message === "User is not pending") {
       return res.status(400).json({ success: false, message: err.message });
     }
+
+    console.error(err);
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -226,8 +226,6 @@ exports.updatePersonalData = async (req, res) => {
           results: updatedUser
       });
   } catch (err) {
-      console.error(err);
-
       if (err.message === "Email already in use" || err.message === "Username already in use") {
           return res.status(409).json({ success: false, message: err.message });
       }
@@ -236,6 +234,7 @@ exports.updatePersonalData = async (req, res) => {
           return res.status(404).json({ success: false, message: err.message });
       }
 
+      console.error(err);
       res.status(500).json({ success: false, message: "Internal server error" });
   }
 }

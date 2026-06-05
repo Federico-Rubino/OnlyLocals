@@ -9,10 +9,11 @@ import ShopResultsList from '../../../components/ShopResultsList';
 import { SearchResult } from '../../../services/searchService';
 import { userService } from '../../../services/userServices';
 import { getCurrentDayKey, getCurrentSlotKey } from '../../../utils/getCurrentSlot';
+import { locationPreference } from '../../../utils/locationPreference';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
-const MILAN_CENTER: [number, number] = [9.1900, 45.4642];
+const TRENTO_CENTER: [number, number] = [11.1217, 46.0748];
 
 
 const extractCurrentMarker = (
@@ -49,6 +50,7 @@ const HomeScreen = () => {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [userCoordinate, setUserCoordinate] = useState<[number, number] | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [locationVisible, setLocationVisible] = useState(false);
   const [searchTrigger, setSearchTrigger] = useState<SearchTrigger | null>(null);
 
   const router = useRouter();
@@ -66,8 +68,13 @@ const HomeScreen = () => {
   // Request location permission and fly to user position on mount
   useEffect(() => {
     (async () => {
+      const prefEnabled = await locationPreference.get();
+      if (!prefEnabled) return;
+
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
+
+      setLocationVisible(true);
 
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
@@ -121,7 +128,7 @@ const HomeScreen = () => {
     setActiveResults([]);
     setShowBottomSheet(false);
     cameraRef.current?.setCamera({
-      centerCoordinate: userCoordinate ?? MILAN_CENTER,
+      centerCoordinate: userCoordinate ?? TRENTO_CENTER,
       zoomLevel: 14,
       animationMode: 'flyTo',
       animationDuration: 600,
@@ -163,14 +170,14 @@ const HomeScreen = () => {
           <Mapbox.Camera
             ref={cameraRef}
             zoomLevel={13}
-            centerCoordinate={MILAN_CENTER}
+            centerCoordinate={TRENTO_CENTER}
             animationMode="flyTo"
             animationDuration={2000}
           />
 
           {/* Blue pulsing dot for the user's current position */}
           <Mapbox.UserLocation
-            visible={true}
+            visible={locationVisible}
             animated={true}
           />
 

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
 import { setSessionExpiredCallback } from '../services/api';
+import { userService } from '../services/userService';
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -13,6 +14,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   updateRole: (newRole: string) => Promise<void>;
   updateShopId: (newShopId: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -70,8 +72,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setShopId(newShopId);
   };
 
+  const deleteAccount = async () => {
+    await userService.deleteAccount();
+    await tokenService.clearTokens();
+    setIsLoggedIn(false);
+    setRole(null);
+    setShopId(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole, updateShopId }}>
+    <AuthContext.Provider value={{ isLoggedIn, isLoading, role, shopId, login, logout, updateRole, updateShopId, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
