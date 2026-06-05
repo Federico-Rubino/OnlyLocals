@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import Mapbox from '@rnmapbox/maps';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Shop } from '../types/shop';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'expo-router';
-import { userService } from '../services/userServices';
 import apiClient from '../services/api';
-import { submitFeedback, getFeedbacksByShop, FeedbackItem } from '../services/shopServices';
+import { FeedbackItem, getFeedbacksByShop, submitFeedback } from '../services/shopServices';
+import { userService } from '../services/userServices';
+import { Shop } from '../types/shop';
 
 Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeXFxIn0.xGLxX_ZaX7avzio7VCRSbA');
 
@@ -244,7 +244,11 @@ export default function ShopResult({ isLoading, errorMessage, shopData, shopId }
         <Text style={styles.sectionTitle}>📅 Eventi</Text>
         {events?.length > 0 ? (
           events.map((e, i) => (
-            <View key={i} style={styles.eventCard}><Text style={styles.eventName}>{e.name}</Text></View>
+            <View key={i} style={styles.eventCard}>
+              <Text style={styles.eventName}>{e.name}</Text>
+              {e.date ? <Text style={styles.eventDate}> {new Date(e.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</Text> : null}
+              {e.description ? <Text style={styles.eventDesc}>{e.description}</Text> : null}
+            </View>
           ))
         ) : <Text style={styles.noData}>Nessun evento.</Text>}
       </View>
@@ -388,7 +392,9 @@ const styles = StyleSheet.create({
 
   emptyCard: { padding: 20, backgroundColor: '#f5f7fa', borderRadius: 10, alignItems: 'center' },
   eventCard: { backgroundColor: '#f5f7fa', padding: 12, borderRadius: 8, marginBottom: 8 },
-  eventName: { fontWeight: 'bold' },
+  eventName: { fontWeight: 'bold', fontSize: 15 },
+  eventDate: { color: '#666', fontSize: 13, marginTop: 2 },
+  eventDesc: { color: '#444', fontSize: 14, marginTop: 4 },
   noData: { color: '#aaa', fontStyle: 'italic' },
   loadingText: { marginTop: 10 },
   errorBox: { padding: 20, backgroundColor: '#fff5f5', borderRadius: 10 },
