@@ -129,7 +129,6 @@ npm install                 # installa le dipendenze
 npx expo start              # avvia il server Metro (scansionare QR con Expo Go)
 npx expo start --android    # apre direttamente su emulatore Android
 npx expo start --ios        # apre direttamente su simulatore iOS
-npx expo start --web        # apre nel browser
 npm run lint                # analisi statica con ESLint
 ```
 
@@ -138,6 +137,7 @@ Per utilizzare l'app su un **dispositivo fisico** con le mappe Mapbox è necessa
 ```bash
 npx eas build --platform android --profile preview
 ```
+Prima di lanciare la compilazione della build è necessario inserire in `app.json`, nel campo `RNMAPBOX_MAPS_DOWNLOAD_TOKEN` il proprio token privato mapbox.
 
 In alternativa è disponibile l'APK precompilato `onlylocals.apk` al link: `https://drive.google.com/file/d/1u5vt-xEglyJ2fIuMlAlQX2-3XtLEWz6m/view?usp=sharing`.
 
