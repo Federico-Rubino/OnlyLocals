@@ -109,26 +109,20 @@ export default function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      // in handleRegister, replace the TODO section:
-        const response = await userService.register({
-          name:      form.name.trim(),
-          surname:   form.surname.trim(),
-          birthDate: form.birthDate,       // DD/MM/YYYY — converted inside userService
-          email:     form.email.trim(),
-          username:  form.username.trim(),
-          password:  form.password,
-        });
+      await userService.register({
+        name:      form.name.trim(),
+        surname:   form.surname.trim(),
+        birthDate: form.birthDate,
+        email:     form.email.trim(),
+        username:  form.username.trim(),
+        password:  form.password,
+      });
 
-        await login({ identifier: form.username.trim(), password: form.password });
-        router.replace('/(auth)/role-selection');
-
-      Alert.alert('Success', 'Account created!'); // placeholder
+      await login({ identifier: form.username.trim(), password: form.password });
+      router.replace('/(auth)/role-selection');
     } catch (error: any) {
-      const serverMessage = error.response?.data?.message || 'Registration failed. Try again.';
-      if(error != 409){
-        router.replace('/(auth)/role-selection');
-      }
-      Alert.alert('Error', serverMessage);
+      const serverMessage = error.response?.data?.message || 'Registrazione fallita. Riprova.';
+      Alert.alert('Errore', serverMessage);
     } finally {
       setIsLoading(false);
     }
@@ -243,7 +237,7 @@ export default function RegisterScreen() {
         disabled={isLoading}
       >
         <Text style={styles.buttonText}>
-          {isLoading ? 'Creazione dell account...' : 'Registra'}
+          {isLoading ? "Creazione dell'account..." : 'Registra'}
         </Text>
       </TouchableOpacity>
 
@@ -261,12 +255,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f7fa',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#1a2a4a',
     marginBottom: 6,
   },
   subtitle: {
@@ -325,7 +319,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#255cb3',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
@@ -348,7 +342,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   loginLink: {
-    color: '#007AFF',
+    color: '#255cb3',
     fontWeight: '600',
   },
 });

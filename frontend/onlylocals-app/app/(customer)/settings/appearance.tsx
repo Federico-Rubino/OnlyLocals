@@ -84,7 +84,7 @@ export default function AppearanceScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  pageTitle: { fontSize: 26, fontWeight: 'bold', marginBottom: 20, marginTop: 8 },
+  pageTitle: { fontSize: 26, fontWeight: '700', marginBottom: 20, marginTop: 8 },
   preview: { borderRadius: 20, padding: 20, marginBottom: 8, alignItems: 'center' },
   previewCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 12, width: '100%', gap: 12 },
   previewAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },

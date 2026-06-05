@@ -1,7 +1,10 @@
+const mongoose = require('mongoose');
+const crypto = require('crypto');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const emailService = require('./emailService');
 
 
 exports.createUser = async (data) => {
@@ -22,8 +25,7 @@ exports.createUser = async (data) => {
     auth: {
       passwordHash: hashedPassword,
       username: data.username
-    },
-
+    }
   };
 
   return User.create(user);
@@ -146,6 +148,10 @@ exports.addShopToFavorites = async (userId, shopId) => {
   user.savedShops.push(shopId);
   await user.save();
 
+  shop.statistiche.numSalvataggi += 1;
+  shop.markModified('statistiche');
+  await shop.save();
+
   return user.savedShops;
 }
 
@@ -179,10 +185,47 @@ exports.setAsCustomer = async (userId) => {
   }
 
   user.role = 'customer';
+  user.fidelityCard = {
+    barcode: new mongoose.Types.ObjectId().toString(),
+    points: []
+  };
   await user.save();
 
   return user.role;
 }
+
+exports.getFavoritesWithDetails = async (userId) => {
+  const user = await User.findById(userId, 'savedShops').populate('savedShops', 'name category description');
+  if (!user) throw new Error('User not found');
+  return user.savedShops;
+};
+
+exports.savePushToken = async (userId, token) => {
+  await User.findByIdAndUpdate(userId, { pushToken: token });
+};
+
+exports.getNotifications = async (userId) => {
+  const user = await User.findById(userId, 'notifications');
+  if (!user) throw new Error('User not found');
+  const sorted = [...user.notifications].sort(
+    (a, b) => new Date(b.sentAt) - new Date(a.sentAt)
+  );
+  return sorted;
+};
+
+exports.markNotificationRead = async (userId, notificationId) => {
+  await User.updateOne(
+    { _id: userId, 'notifications._id': notificationId },
+    { $set: { 'notifications.$.read': true } }
+  );
+};
+
+exports.markAllNotificationsRead = async (userId) => {
+  await User.updateOne(
+    { _id: userId },
+    { $set: { 'notifications.$[].read': true } }
+  );
+};
 
 exports.updatePersonalData = async (userId, newInfo) => {
   const user = await User.findById(userId);
@@ -212,3 +255,161 @@ exports.updatePersonalData = async (userId, newInfo) => {
   
   return changes;
 }
+
+exports.getPoints = async (userId) => {
+    const user = await User.findById(userId).select('fidelityCard');
+    if (!user) throw new Error("User not found");
+
+    if (!user.fidelityCard || !user.fidelityCard.barcode) {
+        throw new Error("Fidelity card not found");
+    }
+
+    const shopIds = user.fidelityCard.points.map(p => p.activity);
+    const shops = await Shop.find({ _id: { $in: shopIds } })
+        .select('name fidelityCardManager.vantaggi');
+
+    const shopMap = {};
+    shops.forEach(s => { shopMap[s._id.toString()] = s; });
+
+    const enriched = user.fidelityCard.points
+        .filter(p => p.count > 0)
+        .map(p => ({
+            shopId:    p.activity,
+            shopName:  shopMap[p.activity]?.name ?? 'Negozio sconosciuto',
+            punti:     p.count,
+            vantaggi:  shopMap[p.activity]?.fidelityCardManager?.vantaggi ?? [],
+        }));
+
+    return {
+        barcode: user.fidelityCard.barcode,
+        shops:   enriched,
+    };
+};
+
+
+
+exports.getUserData = async (userId) =>{
+  const user = await User.findById(userId).select('-auth'); //pswd and token are never send to client
+  if(!user) throw new Error("User not found");
+  return user;
+};
+
+exports.saveSearch = async (userId, searchData) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  if (user.role !== 'customer') throw new Error('Only customers can save searches');
+
+  const searchString = JSON.stringify(searchData);
+  if (user.searches.includes(searchString)) throw new Error('Search already saved');
+
+  user.searches.push(searchString);
+  await user.save();
+  return user.searches;
+};
+
+exports.getSavedSearches = async (userId) => {
+  const user = await User.findById(userId, 'searches');
+  if (!user) throw new Error('User not found');
+  return user.searches.map(s => {
+    try {
+      return { ...JSON.parse(s), raw: s };
+    } catch {
+      return { name: s, raw: s };
+    }
+  });
+};
+
+exports.removeSearch = async (userId, searchString) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+  const idx = user.searches.indexOf(searchString);
+  if (idx === -1) throw new Error('Search not found');
+  user.searches.splice(idx, 1);
+  await user.save();
+  return user.searches;
+};
+
+exports.deleteAccount = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  if (user.role === 'vendor' && user.vendorShop) {
+    await Shop.findByIdAndDelete(user.vendorShop);
+  }
+
+  await User.findByIdAndDelete(userId);
+};
+
+// ── Password recovery ────────────────────────────────────────────────────────
+
+const PIN_TTL_MS            = 15 * 60 * 1000;
+const RECOVERY_TOKEN_TTL_MS = 15 * 60 * 1000;
+const MAX_PIN_ATTEMPTS      = 5;
+
+exports.forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) return;
+
+  const pin = crypto.randomInt(100000, 999999).toString();
+  const pinHash = await bcrypt.hash(pin, 10);
+
+  user.passwordReset = {
+    pin:                 pinHash,
+    pinExpiry:           new Date(Date.now() + PIN_TTL_MS),
+    pinAttempts:         0,
+    recoveryToken:       null,
+    recoveryTokenExpiry: null,
+  };
+  await user.save();
+
+  await emailService.sendPasswordRecoveryPin(email, pin);
+};
+
+exports.verifyPin = async (email, pin) => {
+  const user = await User.findOne({ email });
+  if (!user || !user.passwordReset?.pin) throw new Error('No active recovery request');
+
+  if (new Date() > user.passwordReset.pinExpiry) {
+    user.passwordReset = {};
+    await user.save();
+    throw new Error('PIN expired');
+  }
+
+  if (user.passwordReset.pinAttempts >= MAX_PIN_ATTEMPTS) {
+    throw new Error('Too many attempts');
+  }
+
+  const match = await bcrypt.compare(pin, user.passwordReset.pin);
+  if (!match) {
+    user.passwordReset.pinAttempts += 1;
+    await user.save();
+    throw new Error('Invalid PIN');
+  }
+
+  const recoveryToken = crypto.randomBytes(32).toString('hex');
+  user.passwordReset.pin                 = null;
+  user.passwordReset.pinExpiry           = null;
+  user.passwordReset.pinAttempts         = 0;
+  user.passwordReset.recoveryToken       = recoveryToken;
+  user.passwordReset.recoveryTokenExpiry = new Date(Date.now() + RECOVERY_TOKEN_TTL_MS);
+  await user.save();
+
+  return recoveryToken;
+};
+
+exports.resetPassword = async (recoveryToken, newPassword) => {
+  const user = await User.findOne({ 'passwordReset.recoveryToken': recoveryToken });
+  if (!user) throw new Error('Invalid or expired recovery token');
+
+  if (new Date() > user.passwordReset.recoveryTokenExpiry) {
+    user.passwordReset = {};
+    await user.save();
+    throw new Error('Invalid or expired recovery token');
+  }
+
+  user.auth.passwordHash  = await bcrypt.hash(newPassword, 10);
+  user.auth.refreshTokens = [];
+  user.passwordReset      = {};
+  await user.save();
+};
+

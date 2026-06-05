@@ -1,5 +1,6 @@
 
 const shopService = require('../services/shopService');
+const User = require('../models/userModel');
 
 exports.registerShop = async (req, res) => {
     try {
@@ -35,7 +36,14 @@ exports.registerShop = async (req, res) => {
 }
 exports.getShopById = async (req, res) =>{
   try{
-        const shop = await shopService.getShopById(req.params.id);
+        let skipCount = false;
+        if (req.user) {
+            const user = await User.findById(req.user.userId).select('vendorShop');
+            if (user && user.vendorShop && user.vendorShop.toString() === req.params.id) {
+                skipCount = true;
+            }
+        }
+        const shop = await shopService.getShopById(req.params.id, skipCount);
         if(!shop){
             return res.status(404).json({message: "Shop not found"});
         }
@@ -48,7 +56,12 @@ exports.getShopById = async (req, res) =>{
                 itinerario: shop.itinerario,
                 events: shop.events,
                 promotions: shop.promotions,
-                
+                statistiche: {
+                votoMedio: shop.statistiche?.votoMedio,
+                totaleFeedback: shop.statistiche?.totaleFeedback,
+                storicoFeedback: shop.statistiche?.storicoFeedback || []
+                },
+                ...(skipCount && { fidelityCardManager: shop.fidelityCardManager }),
             }
         });
     }catch (err){
@@ -117,10 +130,17 @@ exports.addEvent = async (req, res) => {
             });
         }
 
-        res.status(500).json({ 
-            success: false, 
-            message: "Error adding event to shop", 
-            error: err.message 
+        if (err.name === "DuplicateEvent") {
+            return res.status(409).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Error adding event to shop",
+            error: err.message
         });
     }
 }
@@ -199,8 +219,294 @@ exports.deletePromotion = async (req, res) => {
         success: true,
         message: "Promotion removed",
         results: updatedPromotions
+
     });
 } catch (err) {
     res.status(500).json({ message: err.message });
 }
 }
+
+exports.scanFidelityCard = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode } = req.body;
+
+        if (!barcode) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode obbligatorio"
+            });
+        }
+
+        const result = await shopService.scanFidelityCard(vendorId, barcode);
+
+        res.status(200).json({
+            success: true,
+            message: "Punto aggiunto con successo",
+            data: result
+        });
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        if (err.message === "Modalità non compatibile: shop usa punti per acquisto, usa addPoints") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Fidelity card manager not configured") {
+            return res.status(409).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.setVantaggi = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { vantaggi } = req.body;
+
+        if (!vantaggi || vantaggi.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Vantaggi non forniti"
+            });
+        }
+
+        const result = await shopService.setVantaggi(vendorId, vantaggi);
+
+        res.status(200).json({
+            success: true,
+            message: "Vantaggi aggiornati con successo",
+            data: result
+        });
+    } catch (err) {
+        if (err.message === "Vantaggi non modificabili prima di 3 mesi dall'ultima modifica") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.getVantaggi = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const vantaggi = await shopService.getVantaggi(vendorId);
+
+        res.status(200).json({
+            success: true,
+            data: vantaggi
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+
+
+exports.addPoints = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode, importo } = req.body;
+
+        if (!barcode || !importo || importo <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode e importo obbligatori"
+            });
+        }
+
+        const result = await shopService.addPoints(vendorId, barcode, importo);
+
+        res.status(200).json({
+            success: true,
+            message: "Punti aggiunti con successo",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        if (err.message === "Modalità non compatibile: shop usa punti per visita, usa scan") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Tasso di conversione non configurato") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Fidelity card manager not configured") {
+            return res.status(409).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.redeemVantaggio = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { barcode, descrizioneVantaggio } = req.body;
+
+        if (!barcode || !descrizioneVantaggio) {
+            return res.status(400).json({
+                success: false,
+                message: "Barcode e descrizioneVantaggio obbligatori"
+            });
+        }
+
+        const result = await shopService.redeemVantaggio(vendorId, barcode, descrizioneVantaggio);
+
+        res.status(200).json({
+            success: true,
+            message: "Vantaggio riscattato con successo",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Not enough points") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message === "Vantaggio not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.modifyConversion = async (req, res) => {
+    try {
+        const vendorId = req.user.userId;
+        const { tasso } = req.body;
+
+        if (!tasso) {
+            return res.status(400).json({
+                success: false,
+                message: "Tasso di conversione obbligatorio"
+            });
+        }
+
+        const result = await shopService.modifyConversion(vendorId, tasso);
+
+        res.status(200).json({
+            success: true,
+            message: "Tasso di conversione aggiornato",
+            data: result
+        });
+
+    } catch (err) {
+        if (err.message === "Not a vendor") {
+            return res.status(403).json({ success: false, message: err.message });
+        }
+        if (err.message === "Tasso di conversione deve essere maggiore di 0") {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error", error: err.message });
+    }
+};
+
+exports.getStatistiche = async (req,res)=>{
+    try {
+        const vendorId = req.user.userId;
+        const shop = await shopService.getStatistiche(vendorId);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                nomeShop: shop.name,
+                statistiche: shop.statistiche ? {
+                    numSalvataggi: shop.statistiche.numSalvataggi,
+                    votoMedio: shop.statistiche.votoMedio,
+                    totalFeedback: shop.statistiche.totaleFeedback,
+                    mappaAccessi: shop.statistiche.mappaAccessi,
+                    storicoFeedback: shop.statistiche.storicoFeedback,
+                    ultimoAggiornamento: shop.statistiche.ultimoAggiornamento
+                } : "Nessuna statistica disponibile"
+            }
+        });
+    }catch(err){
+        if(err.message=== "Not a vendor"){
+            return res.status(403).json({success: false, message: err.message});
+        }
+        if(err.message === "Shop not found"){
+            return res.status(404).json({success: false, message: err.message});
+        }
+        res.status(500).json({
+            success:false,
+        });
+    }
+}
+
+exports.addFeedback = async (req,res)=>{
+    try{
+        const userId = req.user.userId;
+        const {shopId} = req.params;
+        const {voto, commento} = req.body;
+
+        if(!voto || voto<1 || voto>5){
+            return res.status(400).json({
+                success: false,
+                message: "Il voto deve essere compres tra 1 e 5"
+            });
+        }
+        const feedback = await shopService.addFeedback(userId, shopId, {voto, commento});
+
+        res.status(201).json({
+            success: true,
+            message: "Feedback aggiunto con successo",
+            data: feedback
+        });
+    }catch (err){
+        if(err.message === "Shop not found"){
+            return res.status(404).json({ success: false, message: err.message});
+        }
+        if(err.message === "User not found"){
+            return res.status(404).json({success: false, message: err.message});
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: err.message
+        });
+    }
+};
+
+exports.updateShop = async (req, res)=>{
+    try{
+        const vendorId = req.user.userId;
+        const updateData = req.body;
+
+        if(Object.keys(updateData).length === 0){
+            return res.status(400).json ({
+                success: false,
+                message: "No data provided for update."
+            });
+        }
+        const updateShop = await shopService.updateShop(vendorId, updateData);
+
+        res.status (200).json({
+            success: true,
+            message: "Shop updated successfully",
+            results: updateShop});
+        
+    }catch (err){
+        if(err.message == "Shop not found"){
+            return res.status(404).json({
+                success: false,
+                message: err.message
+            });
+        }if(err.message == "Not a vendor"){
+            return res.status(403).json({
+                success: false,
+                message: "Internal server error",
+                error: err.message
+            });
+        }
+    }
+};

@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../../context/AuthContext';
+import { userService } from '../../../services/userService';
 
 const ACCOUNT_ITEMS = [
   { label: 'Cambia password',       icon: 'lock-closed-outline', color: '#255cb3' },
@@ -14,6 +16,29 @@ const SUPPORT_ITEMS = [
 
 export default function SettingsScreen() {
   const [location, setLocation] = useState(false);
+  const { logout } = useAuth();
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Elimina account',
+      'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile e tutti i tuoi dati verranno cancellati.',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Elimina',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await userService.deleteAccount();
+              await logout();
+            } catch {
+              Alert.alert('Errore', 'Impossibile eliminare l\'account. Riprova più tardi.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -43,6 +68,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             key={item.label}
             style={[styles.row, idx > 0 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}
+            onPress={item.label === 'Elimina account' ? handleDeleteAccount : undefined}
           >
             <View style={styles.rowLeft}>
               <Ionicons name={item.icon as any} size={20} color={item.color} style={styles.rowIcon} />
@@ -85,7 +111,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container:    { flex: 1, backgroundColor: '#f5f7fa', padding: 16 },
-  pageTitle:    { fontSize: 26, fontWeight: 'bold', marginBottom: 20, marginTop: 8 },
+  pageTitle:    { fontSize: 26, fontWeight: '700', color: '#1a2a4a', marginBottom: 20, marginTop: 8 },
   sectionTitle: { fontSize: 12, fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginTop: 16, marginLeft: 4 },
   card:         { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   row:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },

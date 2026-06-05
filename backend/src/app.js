@@ -2,8 +2,8 @@ const express = require('express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const routesUser = require('./routes/routesUser');
-
 const routesShop = require('./routes/routesShop');
+const routesFeedback = require('./routes/routesFeedback');
 
 const app = express();
 
@@ -13,6 +13,7 @@ app.use(express.json());
 // routes
 app.use('/api/users', routesUser);
 app.use('/api/shops', routesShop);
+app.use('/api/feedback', routesFeedback);
 
 
 //swagger api ui
@@ -21,10 +22,18 @@ const swaggerOptions = {
         openapi: '3.0.0'
         ,
         info: {
-            title: 'Hello World'
-            ,
-            version: '1.0.0'
-            ,
+            title: 'Only Locals API Docs',
+            version: '1.0.0',
+        },
+        servers: [{ url: 'http://localhost:3000' }],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
         },
     },
     apis: [__dirname + '/routes/*.js'], // files containing annotations as above

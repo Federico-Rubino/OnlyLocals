@@ -154,6 +154,61 @@ exports.setAsCustomer = async (req, res) => {
   }
 }
 
+exports.savePushToken = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { pushToken } = req.body;
+    if (!pushToken) {
+      return res.status(400).json({ success: false, message: 'pushToken required' });
+    }
+    await userService.savePushToken(userId, pushToken);
+    res.status(200).json({ success: true, message: 'Push token saved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notifications = await userService.getNotifications(userId);
+    res.status(200).json({ success: true, data: notifications });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.markNotificationRead = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { notificationId } = req.params;
+    await userService.markNotificationRead(userId, notificationId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.markAllNotificationsRead = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await userService.markAllNotificationsRead(userId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getFavorites = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await userService.getFavoritesWithDetails(userId);
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 exports.updatePersonalData = async (req, res) => {
   try {
       const userId = req.user.userId;
@@ -183,3 +238,150 @@ exports.updatePersonalData = async (req, res) => {
       res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+
+exports.getPoints = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const points = await userService.getPoints(userId);
+
+        res.status(200).json({
+            success: true,
+            data: points
+        });
+    } catch (err) {
+        if (err.message === "Fidelity card not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+
+
+exports.getUserData = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const user = await userService.getUserData(userId);
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+
+    } catch (err) {
+        if (err.message === "User not found") {
+            return res.status(404).json({ success: false, message: err.message });
+        }
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+exports.saveSearch = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, categories } = req.body;
+    if (!name && (!categories || categories.length === 0)) {
+      return res.status(400).json({ success: false, message: 'name or categories required' });
+    }
+    const searches = await userService.saveSearch(userId, {
+      name: name || undefined,
+      categories: categories && categories.length > 0 ? categories : undefined,
+    });
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    if (err.message === 'Search already saved') {
+      return res.status(409).json({ success: false, message: err.message });
+    }
+    if (err.message === 'Only customers can save searches') {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.getSavedSearches = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const searches = await userService.getSavedSearches(userId);
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.removeSearch = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { search } = req.body;
+    if (!search) {
+      return res.status(400).json({ success: false, message: 'search string required' });
+    }
+    const searches = await userService.removeSearch(userId, search);
+    res.status(200).json({ success: true, data: searches });
+  } catch (err) {
+    if (err.message === 'Search not found') {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await userService.deleteAccount(userId);
+    res.status(200).json({ success: true, message: 'Account deleted' });
+  } catch (err) {
+    if (err.message === 'User not found') {
+      return res.status(404).json({ success: false, message: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'email required' });
+
+    await userService.forgotPassword(email);
+    res.status(200).json({ success: true, message: 'If that email is registered, a PIN has been sent.' });
+  } catch (err) {
+    console.error('[forgotPassword]', err);
+    res.status(500).json({ success: false, message: 'Internal server error', detail: err.message });
+  }
+};
+
+exports.verifyPin = async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+    if (!email || !pin) return res.status(400).json({ success: false, message: 'email and pin required' });
+
+    const recoveryToken = await userService.verifyPin(email, pin);
+    res.status(200).json({ success: true, recoveryToken });
+  } catch (err) {
+    if (err.message === 'No active recovery request')
+      return res.status(404).json({ success: false, message: err.message });
+    if (err.message === 'PIN expired' || err.message === 'Invalid PIN')
+      return res.status(400).json({ success: false, message: err.message });
+    if (err.message === 'Too many attempts')
+      return res.status(429).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { recoveryToken, newPassword } = req.body;
+    if (!recoveryToken || !newPassword)
+      return res.status(400).json({ success: false, message: 'recoveryToken and newPassword required' });
+
+    await userService.resetPassword(recoveryToken, newPassword);
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    if (err.message === 'Invalid or expired recovery token')
+      return res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
