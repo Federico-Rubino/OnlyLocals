@@ -1,4 +1,3 @@
-// context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { tokenService } from '../services/auth/tokenService';
 import { authService } from '../services/auth/authService';
@@ -38,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkToken();
   }, []);
 
+  // Wire up the callback so the api client can force a logout when a token refresh fails.
   useEffect(() => {
     setSessionExpiredCallback(() => {
       setIsLoggedIn(false);

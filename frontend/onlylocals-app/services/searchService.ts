@@ -51,21 +51,19 @@ export interface SearchFilters {
 }
 
 export const searchShop = async (filters: SearchFilters): Promise<SearchResponse> => {
-  // 1. Create a clean object: ignore empty strings and empty arrays
   const cleanParams: any = {};
-  
+
   if (filters.name && filters.name.trim() !== '') {
     cleanParams.name = filters.name.trim();
   }
-  
+
   if (filters.category && filters.category.length > 0) {
     cleanParams.category = filters.category;
   }
 
-  // 2. Make the request
   const response = await apiClient.get<SearchResponse>('/shops/search', {
     params: cleanParams,
-    // Crucial for APIs expecting multiple 'category' keys
+    // axios does not repeat array keys by default so we serialize manually to get category=a&category=b
     paramsSerializer: (params) => {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {

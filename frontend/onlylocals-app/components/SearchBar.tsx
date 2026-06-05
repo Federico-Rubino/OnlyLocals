@@ -39,9 +39,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // consumedTs guards against re-running the same saved-search trigger when unrelated state re-renders the parent.
   const consumedTs = useRef<number>(0);
 
-  // Function to update Map Results (Immediate)
   const updateMapResults = async (query: string, categories: string[]) => {
     if (!query.trim() && categories.length === 0) {
       onClear();
@@ -61,7 +61,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
     }
   };
 
-  // Effect for Typing: Shows suggestions + updates map
+  // 400 ms debounce: the API is only called after the user pauses typing,
+  // not on every keystroke. clearTimeout cancels any pending call on each re-render.
   useEffect(() => {
     if (!searchQuery.trim()) {
       setShowSuggestions(false);
@@ -73,14 +74,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
       setIsLoading(true);
       const results = await updateMapResults(searchQuery, selectedCategories);
       setSuggestions(results || []);
-      setShowSuggestions(true); // Show dropdown only when typing
+      setShowSuggestions(true);
       setIsLoading(false);
     }, 400);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Effect for external search trigger (from saved searches)
   useEffect(() => {
     if (!searchTrigger || searchTrigger.ts === consumedTs.current) return;
     consumedTs.current = searchTrigger.ts;
@@ -102,14 +102,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
       .finally(() => setIsLoading(false));
   }, [searchTrigger]);
 
-  // Handler for Categories: Updates map ONLY (No dropdown)
+  // Category taps update the map immediately and never show the dropdown.
+  // The suggestions list is text-search only; categories act as map filters.
   const toggleCategory = async (cat: string) => {
     const newCats = selectedCategories.includes(cat)
       ? selectedCategories.filter((c) => c !== cat)
       : [...selectedCategories, cat];
-    
+
     setSelectedCategories(newCats);
-    setShowSuggestions(false); // Force hide dropdown when filtering
+    setShowSuggestions(false);
     await updateMapResults(searchQuery, newCats);
   };
 
@@ -123,7 +124,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
 
   return (
     <View style={styles.wrapper}>
-      {/* 1. SEARCH INPUT */}
       <View style={styles.bar}>
         {isLoading ? (
           <ActivityIndicator size="small" color="#9CA3AF" style={styles.icon} />
@@ -145,7 +145,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
         )}
       </View>
 
-      {/* 2. FILTERS (Immediate map update, hides dropdown) */}
       <View style={styles.filterLine}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {CATEGORIES.map((cat) => {
@@ -163,7 +162,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
         </ScrollView>
       </View>
 
-      {/* 3. SAVE SEARCH BUTTON (visible when there's an active search) */}
       {onSaveSearch && (searchQuery.length > 0 || selectedCategories.length > 0) && (
         <TouchableOpacity
           style={styles.saveBtn}
@@ -175,7 +173,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
         </TouchableOpacity>
       )}
 
-      {/* 4. SUGGESTIONS (Only visible when typing) */}
       {showSuggestions && searchQuery.length > 0 && (
         <View style={styles.dropdown}>
           {suggestions.length > 0 ? (
@@ -202,7 +199,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onResultsFound, onClear, onSaveSe
   );
 };
 
-// ... Styles stay the same as previous response ...
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',

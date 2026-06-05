@@ -68,11 +68,15 @@ export default function ItineraryBuilder({ value, onChange }: Props) {
     if (loc) nextDay[slot] = loc;
     else delete nextDay[slot];
     const next = { ...value, [day]: nextDay };
+    // If every slot in this day is now empty, remove the day key entirely so
+    // countSlots and buildItinerarioPayload never see zero-slot day entries.
     if (!Object.values(nextDay).some(Boolean)) delete next[day];
     onChange(next);
   };
 
   // Set/clear a slot's location, keeping existing hours or applying slot defaults.
+  // existing?.oraInizio preserves custom hours the user already set — without this,
+  // moving the pin would silently reset the time range to the slot default.
   const setLocation = (day: DayKey, slot: SlotKey, coords: PickedCoordinates | null) => {
     if (!coords) {
       writeSlot(day, slot, null);

@@ -1,4 +1,3 @@
-// app/_layout.tsx
 import { AuthProvider, useAuth} from '../context/AuthContext';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { createContext, useEffect, useState } from 'react';
@@ -47,7 +46,7 @@ function RootNavigator() {
     const inVendorGroup   = segments[0] === '(vendor)';
     const onRoleSelection = inAuthGroup && segments[1] === 'role-selection';
 
-    // 1. Guest → browse as customer
+    // Guests can browse the customer area without logging in.
     if (!isLoggedIn && !inCustomerGroup && !inAuthGroup) {
       router.replace('/(customer)/(tabs)');
       return;
@@ -55,19 +54,18 @@ function RootNavigator() {
 
     if (!isLoggedIn) return;
 
-    // 2. Pending → must complete role selection
+    // Pending users must finish onboarding before reaching any protected screen.
     if (role === 'pending') {
       if (!onRoleSelection) router.replace('/(auth)/role-selection');
       return;
     }
 
-    // 3. Vendor → vendor area
     if (role === 'vendor' && !inVendorGroup) {
       router.replace('/(vendor)/(tabs)');
       return;
     }
 
-    // 4. Customer → customer area, block auth pages
+    // Redirect a logged-in customer away from auth pages they no longer need.
     if (role === 'customer' && inAuthGroup) {
       router.replace('/(customer)/(tabs)');
       return;

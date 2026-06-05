@@ -49,11 +49,8 @@ function itinerarioAttivi(it: Itinerary): number {
   }, 0);
 }
 
-//const SHOP_ID = '69faf4aee24aa7d93bdd3fa7';
-
 export default function VetrinaScreen() {
  const {shopId} = useAuth();
- //const shopId = SHOP_ID;
   const [promozioni, setPromozioni] = useState<Promozione[]>([]);
   const [eventi, setEventi] = useState<Evento[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -215,7 +212,7 @@ export default function VetrinaScreen() {
 
     setLoading(true);
     try {
-      // Forza formato ISO completo
+      // Hardcode midday UTC so server-side timezone differences never shift the date forward or back.
       const dataISO = `${normalizedDate}T10:00:00.000Z`;
 
       await addEvento({

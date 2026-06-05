@@ -16,6 +16,8 @@ import { getStatistiche, type AccessoEntry, type StatisticheData } from '../../.
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+// Build a fixed 7-day window ending today, pre-filled with zeros so days with no visits still appear.
+// Entries outside the window are ignored by the `key in counts` guard.
 function groupAccessesByDay(accessi: AccessoEntry[]): { label: string; count: number }[] {
   const counts: Record<string, number> = {};
 

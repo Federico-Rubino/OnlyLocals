@@ -1,4 +1,3 @@
-// app/(auth)/register.tsx
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, TouchableOpacity,
@@ -118,6 +117,7 @@ export default function RegisterScreen() {
         password:  form.password,
       });
 
+      // After registration, log in immediately so the user lands on role-selection without an extra step.
       await login({ identifier: form.username.trim(), password: form.password });
       router.replace('/(auth)/role-selection');
     } catch (error: any) {

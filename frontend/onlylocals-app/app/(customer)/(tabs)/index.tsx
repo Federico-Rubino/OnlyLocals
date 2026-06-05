@@ -16,6 +16,8 @@ Mapbox.setAccessToken('pk.eyJ1IjoiZmRnciIsImEiOiJjbW9xejFmaGcyMnZrMnFzMWJrZDJxeX
 const TRENTO_CENTER: [number, number] = [11.1217, 46.0748];
 
 
+// Returns the marker position only when the shop has a slot set for the current real-world
+// day and time window. Shops with no position for the current slot are excluded from the map.
 const extractCurrentMarker = (
   shop: SearchResult
 ): { id: string; coordinate: [number, number]; label: string } | null => {
@@ -28,6 +30,8 @@ const extractCurrentMarker = (
   let lng: number | undefined;
   let lat: number | undefined;
 
+  // Prefer location.coordinates (new API format); fall back to flat latitudine/longitudine
+  // fields that may appear in older or partially migrated shop documents.
   if (slotData.location.coordinates.length === 2) {
     [lng, lat] = slotData.location.coordinates;
   } else if (slotData.latitudine != null && slotData.longitudine != null) {
@@ -127,6 +131,7 @@ const HomeScreen = () => {
   const handleClear = () => {
     setActiveResults([]);
     setShowBottomSheet(false);
+    // Fall back to TRENTO_CENTER when the user denied location permission or disabled it in settings.
     cameraRef.current?.setCamera({
       centerCoordinate: userCoordinate ?? TRENTO_CENTER,
       zoomLevel: 14,

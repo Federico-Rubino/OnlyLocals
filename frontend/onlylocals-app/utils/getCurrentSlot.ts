@@ -1,6 +1,7 @@
 export type DayKey = 'lunedi' | 'martedi' | 'mercoledi' | 'giovedi' | 'venerdi' | 'sabato' | 'domenica';
 export type SlotKey = 'mattina' | 'pomeriggio' | 'sera';
 
+// Date.getDay() returns 0 for Sunday, so the array starts with 'domenica' to align the indexes.
 const DAY_MAP: DayKey[] = ['domenica', 'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato'];
 
 export const getCurrentDayKey = (): DayKey => {

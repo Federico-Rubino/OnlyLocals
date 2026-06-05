@@ -45,8 +45,10 @@ export default function CameraScreen() {
   const [selectedVantaggio, setSelectedVantaggio] = useState('');
   const [result, setResult] = useState<ResultData | null>(null);
   const [cameraActive, setCameraActive] = useState(true);
+  // scanLock prevents a second barcode event from firing while the action sheet is already open.
   const scanLock = useRef(false);
 
+  // Deactivate the camera when the screen loses focus to avoid background scanning.
   useFocusEffect(
     useCallback(() => {
       setCameraActive(true);
@@ -60,6 +62,8 @@ export default function CameraScreen() {
   }, [shopId]);
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
+    // scanLock.current catches rapid re-fires before React re-renders and updates scanState.
+    // The scanState check is a secondary guard for any event that arrives after the modal opens.
     if (scanLock.current || scanState !== 'scanning') return;
     scanLock.current = true;
     setBarcode(data);

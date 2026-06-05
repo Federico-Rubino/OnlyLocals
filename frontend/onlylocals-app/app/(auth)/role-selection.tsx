@@ -40,6 +40,7 @@ function validateShop(form: ShopForm): ShopErrors {
 }
 
 // Convert the builder state into the backend payload, keeping only set slots.
+// Days where all slots are null are omitted entirely — the backend only stores what is set.
 function buildItinerarioPayload(state: ItineraryState): ItinerarioPayload {
   const out: ItinerarioPayload = {};
   for (const [day, slots] of Object.entries(state)) {
@@ -77,7 +78,8 @@ export default function RoleSelectionScreen() {
       // Backend sets role 'pending' -> 'customer'. This endpoint is one of the
       // only two a pending user is allowed to call.
       await apiClient.patch('/users/setAsCustomer');
-      // Clear the session and send the new customer to the login page.
+      // Log out so the next login issues a fresh JWT with role:'customer'.
+      // Updating the token in place is not possible — the role is embedded in the payload.
       await logout();
       router.replace('/(auth)/login');
     } catch (err: any) {
@@ -122,6 +124,9 @@ export default function RoleSelectionScreen() {
         category: shopForm.categories,
         itinerario: buildItinerarioPayload(itinerary),
       });
+      // updateRole and updateShopId write to SecureStore and update the React context.
+      // No re-login is needed here because the vendor role is stored on the user document
+      // by the backend; the existing JWT still passes authentication.
       await updateRole('vendor');
       await updateShopId(result.id);
     } catch (err: any) {

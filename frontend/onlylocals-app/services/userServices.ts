@@ -24,6 +24,7 @@ export const getFidelityCard = async (): Promise<FidelityCardData> => {
   return response.data.data;
 };
 
+// The register form collects dates as DD/MM/YYYY but the API expects YYYY-MM-DD.
 function toISODate(ddmmyyyy: string): string {
   const [dd, mm, yyyy] = ddmmyyyy.split('/');
   return `${yyyy}-${mm}-${dd}`;

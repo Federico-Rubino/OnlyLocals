@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { tokenService } from './auth/tokenService';
 
+// Allows the axios layer to tell React that the session is over without importing AuthContext directly.
 let sessionExpiredCallback: (() => void) | null = null;
 
 export function setSessionExpiredCallback(callback: () => void) {
@@ -15,7 +16,6 @@ const apiClient = axios.create({
 });
 
 
-//request interceptor to add authentication token
 apiClient.interceptors.request.use(
   async (config) => {
 
@@ -31,15 +31,16 @@ apiClient.interceptors.request.use(
   }
 );
 
-// response interceptor to distinguish public api from one with login
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   async (error) => {
-    // Save original request
     const originalRequest = error.config;
 
+    // The backend returns 403 when the access token is expired, not 401.
+    // _retry is set to true before the refresh attempt so that if the refresh
+    // endpoint itself returns a 403, this interceptor won't loop infinitely.
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
@@ -55,8 +56,7 @@ apiClient.interceptors.response.use(
         });
 
         const newAccessToken = response.data.accessToken;
-        const newRefreshToken = response.data.refreshToken; 
-        //save new token
+        const newRefreshToken = response.data.refreshToken;
         await tokenService.setTokens(newAccessToken, newRefreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -69,7 +69,6 @@ apiClient.interceptors.response.use(
       }
     }
 
-    //if other error pass to other
     return Promise.reject(error);
   }
 );

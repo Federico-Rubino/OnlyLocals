@@ -29,6 +29,9 @@ export default function QRCodeView({
     const cs = Math.max(1, Math.floor(size / count));
     const dim = cs * count;
 
+    // Run-length encode each row: extend a run while consecutive modules are dark.
+    // One View covers the entire horizontal run instead of one View per module,
+    // reducing the React Native component tree from ~count² to ~5-10 Views per row.
     const built: { offset: number; len: number }[][] = [];
     for (let r = 0; r < count; r++) {
       const segments: { offset: number; len: number }[] = [];

@@ -6,7 +6,6 @@ const ROLE_KEY = 'user_role';
 const SHOP_ID_KEY = 'vendor_shop_id';
 
 export const tokenService = {
-  // Save access and refresh token
   setTokens: async (accessToken: string, refreshToken: string) => {
     try {
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -16,7 +15,6 @@ export const tokenService = {
     }
   },
 
-  // Get access token
   getAccessToken: async (): Promise<string | null> => {
     try {
       return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
@@ -26,7 +24,6 @@ export const tokenService = {
     }
   },
 
-  // Get refresh token
   getRefreshToken: async (): Promise<string | null> => {
     try {
       return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
@@ -36,7 +33,6 @@ export const tokenService = {
     }
   },
 
-  // Save role
   setRole: async (role: string) => {
     try {
       await SecureStore.setItemAsync(ROLE_KEY, role);
@@ -45,7 +41,6 @@ export const tokenService = {
     }
   },
 
-  // Get role
   getRole: async (): Promise<string | null> => {
     try {
       return await SecureStore.getItemAsync(ROLE_KEY);
@@ -55,7 +50,6 @@ export const tokenService = {
     }
   },
 
-  // Save shopId
   setShopId: async (shopId: string | null) => {
     try {
       if (shopId) {
@@ -68,7 +62,6 @@ export const tokenService = {
     }
   },
 
-  // Get shopId
   getShopId: async (): Promise<string | null> => {
     try {
       return await SecureStore.getItemAsync(SHOP_ID_KEY);
@@ -78,7 +71,6 @@ export const tokenService = {
     }
   },
 
-  // Delete everything
   clearTokens: async () => {
     try {
       await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
